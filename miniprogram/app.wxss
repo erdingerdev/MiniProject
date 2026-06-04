@@ -1,0 +1,7 @@
+page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #080b11;
+  color: #e4e4e7;
+  -webkit-font-smoothing: antialiased;
+}

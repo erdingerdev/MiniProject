@@ -1,0 +1,98 @@
+<view class="container">
+
+  <!-- 状态: 加载中 -->
+  <view class="center-box" wx:if="{{status === 'loading'}}">
+    <view class="spinner"></view>
+    <text class="hint">加载中...</text>
+  </view>
+
+  <!-- 状态: 需要登录 -->
+  <view class="center-box" wx:elif="{{status === 'needLogin'}}">
+    <view class="icon-lg">👤</view>
+    <text class="title">需要登录</text>
+    <text class="hint">点击登录后将获取你的微信头像和昵称</text>
+    <button class="btn-primary" bindtap="handleLogin">微信登录</button>
+  </view>
+
+  <!-- 状态: 确认资料 -->
+  <view class="center-box" wx:elif="{{status === 'needProfile'}}">
+    <view class="icon-lg">👤</view>
+    <text class="title">设置资料</text>
+    <text class="hint">请点击获取微信头像和昵称</text>
+
+    <!-- 头像区域：按钮做成透明遮罩覆盖在视觉元素上方 -->
+    <view class="avatar-section">
+      <view class="avatar-wrap">
+        <image class="avatar-preview" src="{{tempAvatar}}" mode="aspectFit" wx:if="{{tempAvatar}}"/>
+        <view class="avatar-empty" wx:else>
+          <text class="avatar-plus">+</text>
+        </view>
+        <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
+      </view>
+      <text class="avatar-hint" wx:if="{{!tempAvatar}}">点击获取头像</text>
+      <text class="avatar-hint" wx:else>点击更换头像</text>
+    </view>
+
+    <view class="field-group">
+      <text class="field-label">昵称</text>
+      <input class="input-code nickname-input" type="nickname" placeholder="点击获取微信昵称" value="{{tempNickname}}" bindinput="onNicknameInput" bindblur="onNicknameBlur"/>
+    </view>
+
+    <button class="btn-primary" bindtap="finishProfile">确认</button>
+  </view>
+
+  <!-- 状态: 输入通行码 -->
+  <view class="center-box" wx:elif="{{status === 'needPasscode'}}">
+    <view class="icon-lg">🎫</view>
+    <text class="title">输入通行码</text>
+    <text class="hint">请输入国哥给你的通行码</text>
+    <input class="input-code" placeholder="输入通行码名称" value="{{codeName}}" bindinput="onCodeInput" maxlength="50"/>
+    <button class="btn-primary" bindtap="submitCode" disabled="{{!codeName}}">验证通行码</button>
+    <text class="error-msg" wx:if="{{errorMsg}}">{{errorMsg}}</text>
+  </view>
+
+  <!-- 状态: 选择人数 -->
+  <view class="center-box" wx:elif="{{status === 'choosePeople'}}">
+    <view class="icon-lg">👥</view>
+    <text class="title">选择入场人数</text>
+    <text class="hint">请选择本次需要入场的人数</text>
+    <view class="count-row">
+      <view class="count-chip {{peopleCount===item?'active':''}}" wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" bindtap="selectCount" data-count="{{item}}">{{item}}</view>
+    </view>
+    <view class="price-box">
+      <text class="price-label">单价 {{unitPrice}} 元 × {{peopleCount}} 人</text>
+      <text class="price-total">合计 {{totalPrice}} 元</text>
+    </view>
+    <button class="btn-primary" bindtap="confirmPeople">确认并查看收款码</button>
+  </view>
+
+  <!-- 状态: 展示收款码 -->
+  <view class="center-box" wx:elif="{{status === 'showQR'}}">
+    <text class="guide" wx:for="{{guideLines}}" wx:key="index">{{item}}</text>
+    <image class="qr-img" src="{{qrUrl}}" mode="widthFix" show-menu-by-longpress="{{true}}" bindtap="previewQR" wx:if="{{qrUrl}}"/>
+    <view class="qr-placeholder" wx:else>
+      <text>收款码尚未上传</text>
+    </view>
+    <button class="btn-save" bindtap="saveQR">保存收款码到相册</button>
+    <button class="btn-primary" bindtap="confirmPayment">我已付款 {{totalPrice}} 元</button>
+    <text class="hint hint-pay">保存收款码到相册 -> 打开微信扫一扫 -> 相册 -> 选择图片 -> 支付</text>
+  </view>
+
+  <!-- 状态: 展示账号密码 -->
+  <view class="center-box" wx:elif="{{status === 'showCredentials'}}">
+    <text class="guide green">确认支付后，使用以下信息入场</text>
+    <view class="cred-box">
+      <view class="cred-row">
+        <text class="cred-label">账号</text>
+        <text class="cred-value" selectable>{{credentials.username}}</text>
+      </view>
+      <view class="cred-row">
+        <text class="cred-label">密码</text>
+        <text class="cred-value" selectable>{{credentials.password}}</text>
+      </view>
+    </view>
+    <button class="btn-secondary" bindtap="refreshCredentials">刷新账号</button>
+    <text class="hint">如密码失效，请点刷新获取最新</text>
+  </view>
+
+</view>

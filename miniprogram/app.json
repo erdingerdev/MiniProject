@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/swim/swim",
+    "pages/admin/admin",
+    "pages/leaderboard/leaderboard",
+    "pages/mine/mine"
+  ],
+  "lazyCodeLoading": "requiredComponents",
+  "window": {
+    "navigationBarBackgroundColor": "#080b11",
+    "navigationBarTitleText": "",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#080b11"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

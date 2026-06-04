@@ -1,0 +1,26 @@
+<view class="container">
+  <view class="header">
+    <text class="header-title">使用次数排行榜</text>
+  </view>
+
+  <view class="list" wx:if="{{list.length > 0}}">
+    <view class="rank-item rank-{{index}}" wx:for="{{list}}" wx:key="openid">
+      <view class="rank-left">
+        <view class="rank-medal" wx:if="{{index === 0}}">🥇</view>
+        <view class="rank-medal" wx:elif="{{index === 1}}">🥈</view>
+        <view class="rank-medal" wx:elif="{{index === 2}}">🥉</view>
+        <text class="rank-num" wx:else>{{index + 1}}</text>
+        <image class="rank-avatar crown" src="{{item.avatar}}" mode="aspectFill" wx:if="{{index === 0 && item.avatar}}"/>
+        <image class="rank-avatar" src="{{item.avatar}}" mode="aspectFill" wx:elif="{{item.avatar}}"/>
+        <view class="rank-avatar placeholder crown" wx:elif="{{index === 0}}"></view>
+        <view class="rank-avatar placeholder" wx:else></view>
+        <text class="rank-name">{{item.nickname || '匿名'}}</text>
+      </view>
+      <text class="rank-count">{{item.count}} 次</text>
+    </view>
+  </view>
+
+  <view class="empty" wx:else>
+    <text class="empty-text">暂无数据</text>
+  </view>
+</view>

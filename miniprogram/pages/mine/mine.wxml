@@ -1,0 +1,77 @@
+<view class="container">
+  <!-- 弹窗 (里程碑 / 冷知识 / 已打卡) -->
+  <view class="milestone-overlay" wx:if="{{showPopup}}" bindtap="closePopup">
+    <view class="milestone-card" catchtap="noop">
+      <view class="milestone-spark left-top" wx:if="{{popupType==='milestone'}}"></view>
+      <view class="milestone-spark right-bottom" wx:if="{{popupType==='milestone'}}"></view>
+      <view class="milestone-badge">
+        <view class="badge-ring" wx:if="{{popupType==='milestone'}}"></view>
+        <text class="milestone-emoji">{{popupEmoji}}</text>
+      </view>
+      <view class="milestone-divider" wx:if="{{popupType==='milestone'}}"></view>
+      <text class="milestone-count">{{popupTitle}}</text>
+      <text class="milestone-label" wx:if="{{popupType==='milestone'}}">次打卡</text>
+      <text class="milestone-text {{popupType==='checked' ? 'summary-text' : ''}}">{{popupText}}</text>
+    </view>
+  </view>
+
+  <view class="month-bar">
+    <view class="month-arrow" bindtap="prevMonth">{{'<'}}</view>
+    <text class="month-label">{{year}} 年 {{month}} 月</text>
+    <view class="month-arrow" bindtap="nextMonth">{{'>'}}</view>
+  </view>
+
+  <view class="slide-stage" bindtouchstart="onTouchStart" bindtouchend="onTouchEnd">
+    <!-- 当前月：动画时滑出 -->
+    <view class="calendar-area {{animating ? 'slide-out-' + animDir : ''}}">
+      <view class="weekday-row">
+        <view class="weekday" wx:for="{{['日','一','二','三','四','五','六']}}" wx:key="*this">{{item}}</view>
+      </view>
+      <view class="day-grid">
+        <view class="day-cell {{item.isCurrentMonth ? '' : 'muted'}} {{item.isToday ? 'today' : ''}} {{item.checked ? 'checked-bg' : ''}}"
+          wx:for="{{days}}" wx:key="index">
+          <text class="day-num {{item.checked ? 'checked-num' : ''}}">{{item.day}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 目标月：动画时滑入 -->
+    <view class="calendar-area slide-in-{{animDir}}" wx:if="{{animating}}">
+      <view class="weekday-row">
+        <view class="weekday" wx:for="{{['日','一','二','三','四','五','六']}}" wx:key="*this">{{item}}</view>
+      </view>
+      <view class="day-grid">
+        <view class="day-cell {{item.isCurrentMonth ? '' : 'muted'}} {{item.isToday ? 'today' : ''}} {{item.checked ? 'checked-bg' : ''}}"
+          wx:for="{{nextDays}}" wx:key="index">
+          <text class="day-num {{item.checked ? 'checked-num' : ''}}">{{item.day}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="makeup-section" wx:if="{{!todayChecked}}">
+    <button class="btn-makeup" bindtap="doMakeup" disabled="{{makeupLoading}}">
+      {{makeupLoading ? '打卡中...' : '今日已游，点击补卡'}}
+    </button>
+  </view>
+
+  <view class="title-banner" wx:if="{{titleText}}">
+    <text class="title-emoji">{{titleEmoji}}</text>
+    <text class="title-text">{{titleText}}</text>
+  </view>
+
+  <view class="stats-row">
+    <view class="stat-item">
+      <text class="stat-num">{{monthlyCount}}</text>
+      <text class="stat-label">本月 次</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-num">{{totalCount}}</text>
+      <text class="stat-label">累计 次</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-num">{{maxStreak}}</text>
+      <text class="stat-label">最长连续 天</text>
+    </view>
+  </view>
+</view>
