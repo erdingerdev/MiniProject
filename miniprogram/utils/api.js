@@ -231,15 +231,17 @@ const listUsersCB = async () => {
   })
 }
 const getLogsCB = async () => {
-  const allLogs = [], batchSize = 20, skip = 0
-  while (true) {
-    const r = await getDb().collection('usage_logs').skip(skip).limit(batchSize).get()
-    if (r.data.length === 0) break
-    allLogs.push(...r.data)
-    if (r.data.length < batchSize) break
-    skip += batchSize
-  }
-  const allUsers = [], uSkip = 0
+  const allLogs = [], batchSize = 20; let skip = 0
+  try {
+    while (true) {
+      const r = await getDb().collection('usage_logs').skip(skip).limit(batchSize).get()
+      if (r.data.length === 0) break
+      allLogs.push(...r.data)
+      if (r.data.length < batchSize) break
+      skip += batchSize
+    }
+  } catch(e) { console.error('getLogsCB fetch error:', e); return [] }
+  const allUsers = []; let uSkip = 0
   while (true) {
     const r = await getDb().collection('app_users').skip(uSkip).limit(batchSize).get()
     if (r.data.length === 0) break
@@ -266,7 +268,7 @@ const getLeaderboardCB = async () => {
     skip += batchSize
   }
   const logs = allLogs
-  const allUsers2 = [], skip2 = 0
+  const allUsers2 = []; let skip2 = 0
   while (true) {
     const res = await getDb().collection('app_users').skip(skip2).limit(batchSize).get()
     if (res.data.length === 0) break
