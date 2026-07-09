@@ -43,7 +43,7 @@ Page({
       frontColor: theme === 'dark' ? '#ffffff' : '#000000',
       backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
     })
-    if (['loading', 'needLogin', 'needPasscode'].includes(this.data.status)) {
+    if (['loading', 'needLogin', 'needPasscode', 'needProfile'].includes(this.data.status)) {
       await this.initFlow()
     }
     if (this.data.status === 'showQR' && !this.data.showPayButton) {

@@ -137,8 +137,9 @@ Page({
       await api.updateAdminConfigCB({ guideText: this.data.guideText })
       wx.hideLoading()
       wx.showToast({ title: '已保存', icon: 'success' })
-    } catch {
+    } catch(e) {
       wx.hideLoading()
+      console.error('saveGuideText error:', e)
       wx.showToast({ title: '保存失败', icon: 'none' })
     }
   },

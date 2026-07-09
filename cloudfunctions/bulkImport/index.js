@@ -43,5 +43,23 @@ exports.main = async (event, context) => {
     return { success: true, results }
   }
   
+  if (action === 'updateAvatars') {
+    const results = []
+    for (const { openid, avatar } of documents) {
+      try {
+        const userRes = await db.collection('app_users').where({ openid }).get()
+        if (userRes.data.length > 0) {
+          await db.collection('app_users').doc(userRes.data[0]._id).update({ data: { avatar } })
+          results.push({ openid, ok: true })
+        } else {
+          results.push({ openid, ok: false, error: 'not found' })
+        }
+      } catch (e) {
+        results.push({ openid, ok: false, error: e.message })
+      }
+    }
+    return { success: true, results }
+  }
+
   return { success: false, error: 'unknown action' }
 }
