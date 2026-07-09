@@ -284,8 +284,8 @@ Page({
   async loadConfig() {
     try {
       const cfg = await api.getAdminConfigCB()
-      const qrUrl = await api.getQRUrlCB()
-      if (qrUrl) { this.setData({ qrUrl }) }
+      const qr = await api.getQRUrlCB().catch(() => '')
+      this.setData({ qrUrl: qr || (cfg.paymentQR ? `https://erdinger.top/api/swim/qr-image/qr.png?t=${Date.now()}` : '') })
       if (cfg.guideText) {
         this.setData({ guideLines: cfg.guideText.split('\n') })
       }
