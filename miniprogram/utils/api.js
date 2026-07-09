@@ -155,6 +155,8 @@ module.exports = {
       })
     })
   }
+}
+
 async function getUserPasscodeStatusCB(openid) {
   if (!db) throw new Error('CloudBase 未初始化')
   const userRes = await db.collection('app_users').where({ openid }).get()
@@ -409,7 +411,8 @@ async function uploadAndSaveQR(filePath) {
   const urlRes = await wx.cloud.getTempFileURL({ fileList: [uploadRes.fileID] })
   return { url: urlRes.fileList[0].tempFileURL, fileID: uploadRes.fileID }
 }
-}
+
+
   getUserPasscodeStatusCB,
   getSwimSettingsCB,
   getBindStatusCB,
