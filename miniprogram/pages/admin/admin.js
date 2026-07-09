@@ -63,7 +63,7 @@ Page({
   async doVerify() {
     wx.showLoading({ title: '验证中...' })
     try {
-      const res = await api.verifyAdmin(this.data.adminPwd)
+      const res = await api.verifyAdminCB(this.data.adminPwd)
       wx.hideLoading()
       if (res.ok) {
         wx.setStorageSync('adminPwd', this.data.adminPwd)
@@ -98,7 +98,7 @@ Page({
   // ── 配置 ──
   async loadConfig() {
     try {
-      const cfg = await api.getAdminConfig()
+      const cfg = await api.getAdminConfigCB()
       // 缓存分类账号密码
       this._categoryCredentials = cfg.categoryCredentials || {}
       const creds = {}
@@ -124,7 +124,7 @@ Page({
     const enabled = e.detail.value
     this.setData({ swimEnabled: enabled })
     try {
-      await api.updateAdminConfig({ swimEnabled: enabled })
+      await api.updateAdminConfigCB({ swimEnabled: enabled })
     } catch {
       this.setData({ swimEnabled: !enabled })
       wx.showToast({ title: '切换失败', icon: 'none' })
@@ -134,7 +134,7 @@ Page({
   async saveGuideText() {
     wx.showLoading({ title: '保存中...' })
     try {
-      await api.updateAdminConfig({ guideText: this.data.guideText })
+      await api.updateAdminConfigCB({ guideText: this.data.guideText })
       wx.hideLoading()
       wx.showToast({ title: '已保存', icon: 'success' })
     } catch {
@@ -166,7 +166,7 @@ Page({
     }
     wx.showLoading({ title: '更新中...' })
     try {
-      await api.updateAdminPassword(this.data.newAdminPwd)
+      await api.updateAdminPasswordCB(this.data.newAdminPwd)
       wx.hideLoading()
       this.setData({ newAdminPwd: '' })
       wx.showToast({ title: '密码已更新', icon: 'success' })
@@ -210,7 +210,7 @@ Page({
 
   async loadPasscodes() {
     try {
-      const list = await api.listPasscodes()
+      const list = await api.listPasscodesCB()
       // 最新创建的排在前面
       list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
       // 从已有通行证中收集分类，保持本地列表
@@ -226,7 +226,7 @@ Page({
 
     wx.showLoading({ title: '创建中...' })
     try {
-      await api.createPasscode({
+      await api.createPasscodeCB({
         name: newCodeName,
         type: newCodeType,
         maxUses: parseInt(newCodeMax) || 0,
@@ -254,7 +254,7 @@ Page({
 
     wx.showLoading({ title: '删除中...' })
     try {
-      await api.deletePasscode(id)
+      await api.deletePasscodeCB(id)
       wx.hideLoading()
       wx.showToast({ title: '已删除', icon: 'success' })
       this.loadPasscodes()
@@ -272,7 +272,7 @@ Page({
     }
     wx.showLoading({ title: '加载中...' })
     try {
-      const detail = await api.getPasscodeDetail(id)
+      const detail = await api.getPasscodeDetailCB(id)
       wx.hideLoading()
       this.setData({ expandedId: id, codeDetail: detail, swipedUserId: '' })
     } catch {
@@ -313,12 +313,12 @@ Page({
     if (!res.confirm) return
     wx.showLoading({ title: '移除中...' })
     try {
-      await api.unbindUser(openid, passcodeId)
+      await api.unbindUserCB(openid, passcodeId)
       wx.hideLoading()
       wx.showToast({ title: '已移除', icon: 'success' })
       this.setData({ swipedUserId: '' })
       // refresh detail
-      const detail = await api.getPasscodeDetail(passcodeId)
+      const detail = await api.getPasscodeDetailCB(passcodeId)
       this.setData({ codeDetail: detail })
     } catch {
       wx.hideLoading()
@@ -329,7 +329,7 @@ Page({
   // ── 用户 ──
   async loadUsers() {
     try {
-      const list = await api.listUsers()
+      const list = await api.listUsersCB()
       this.setData({ users: list })
     } catch { /* ignore */ }
   },
@@ -337,7 +337,7 @@ Page({
   // ── 日志 ──
   async loadLogs() {
     try {
-      const list = await api.getLogs()
+      const list = await api.getLogsCB()
       this.setData({ logs: list })
     } catch { /* ignore */ }
   }

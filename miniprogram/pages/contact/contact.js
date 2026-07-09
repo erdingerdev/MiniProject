@@ -23,7 +23,7 @@ Page({
 
   async loadQR() {
     try {
-      const cfg = await api.getAdminConfig()
+      const cfg = await api.getAdminConfigCB()
       if (cfg.paymentQR) {
         this.setData({ qrUrl: 'https://erdinger.top/api/swim/qr-image/qr.png?t=' + Date.now() })
       }

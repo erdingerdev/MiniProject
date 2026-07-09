@@ -23,7 +23,7 @@ Page({
       backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
     })
     try {
-      const list = await api.getLeaderboard()
+      const list = await api.getLeaderboardCB()
       this.setData({ list })
     } catch {}
   }

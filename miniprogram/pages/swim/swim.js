@@ -77,7 +77,7 @@ Page({
       }
     }
     try {
-      const st = await api.getBindStatus(app.globalData.openid)
+      const st = await api.getBindStatusCB(app.globalData.openid)
       if (st.bound && st.passcodes && st.passcodes.length > 0) {
         // 筛选有效通行证
         const validPasscodes = st.passcodes.filter(p => p.valid)
@@ -104,7 +104,8 @@ Page({
       } else {
         this.setData({ status: 'needPasscode' })
       }
-    } catch {
+    } catch (e) {
+      console.error('CloudBase initFlow error:', e)
       this.setData({ status: 'needPasscode' })
     }
   },
@@ -193,7 +194,7 @@ Page({
     }
 
     try {
-      const st = await api.getBindStatus(app.globalData.openid)
+      const st = await api.getBindStatusCB(app.globalData.openid)
       if (st.bound && st.passcodes && st.passcodes.length > 0) {
         const validPasscodes = st.passcodes.filter(p => p.valid)
         if (validPasscodes.length === 0) {
@@ -231,7 +232,7 @@ Page({
     if (!codeName) return
     wx.showLoading({ title: '验证中...' })
     try {
-      const res = await api.bindPasscode(
+      const res = await api.bindPasscodeCB(
         codeName, app.globalData.openid, app.globalData.nickname, app.globalData.avatar
       )
       wx.hideLoading()
@@ -282,7 +283,7 @@ Page({
   // ── 加载全局配置(收款码/引导文案) ──
   async loadConfig() {
     try {
-      const cfg = await api.getAdminConfig()
+      const cfg = await api.getAdminConfigCB()
       if (cfg.paymentQR) {
         this.setData({ qrUrl: `https://erdinger.top/api/swim/qr-image/qr.png?t=${Date.now()}` })
       }
@@ -327,14 +328,14 @@ Page({
   async confirmPayment() {
     wx.showLoading({ title: '请稍候...' })
     try {
-      await api.confirmPayment(app.globalData.openid, this.data.passcodeId, this.data.passcodeName, this.data.peopleCount)
-      const cred = await api.getCredentials(this.data.selectedPasscodeId, app.globalData.openid)
+      await api.confirmPaymentCB(app.globalData.openid, this.data.passcodeId, this.data.passcodeName, this.data.peopleCount)
+      const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
       wx.hideLoading()
       this.setData({ status: 'showCredentials', credentials: cred })
     } catch {
       wx.hideLoading()
       try {
-        const cred = await api.getCredentials(this.data.selectedPasscodeId, app.globalData.openid)
+        const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
         this.setData({ status: 'showCredentials', credentials: cred })
       } catch {
         wx.showToast({ title: '获取失败，请重试', icon: 'none' })
@@ -346,7 +347,7 @@ Page({
   async refreshCredentials() {
     wx.showLoading({ title: '刷新中...' })
     try {
-      const cred = await api.getCredentials(this.data.selectedPasscodeId, app.globalData.openid)
+      const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
       wx.hideLoading()
       this.setData({ credentials: cred })
       wx.showToast({ title: '已更新', icon: 'success' })
@@ -374,7 +375,7 @@ Page({
     if (!name) return
     wx.showLoading({ title: '验证中...' })
     try {
-      const res = await api.bindPasscode(
+      const res = await api.bindPasscodeCB(
         name, app.globalData.openid, app.globalData.nickname, app.globalData.avatar
       )
       wx.hideLoading()

@@ -1,5 +1,5 @@
 const api = require('./utils/api')
-const APP_VERSION = '1.1'
+const APP_VERSION = '1.2'
 
 App({
   globalData: {
@@ -10,6 +10,16 @@ App({
   },
 
   onLaunch() {
+    // 初始化 CloudBase
+    if (wx.cloud) {
+      wx.cloud.init({
+        env: 'erdinger-dev-d0gzsgzbo6e40458d',
+        traceUser: true
+      })
+      console.log('CloudBase 初始化成功')
+    }
+
+    // 版本升级时清除旧资料，强制重新设置
     // 版本升级时清除旧资料，强制重新设置
     const storedVersion = wx.getStorageSync('app_version')
     if (storedVersion !== APP_VERSION) {

@@ -61,9 +61,9 @@ Page({
       }
       wx.showLoading({ title: '保存中...' })
       try {
-        await api.saveCategories([...categories, name])
-        await api.setCategoryCredentials(name, this.data.username, this.data.password)
-        await api.setCategoryUnitPrice(name, parseFloat(this.data.unitPrice) || 22.98)
+        await api.saveCategoriesCB([...categories, name])
+        await api.setCategoryCredentialsCB(name, this.data.username, this.data.password)
+        await api.setCategoryUnitPriceCB(name, parseFloat(this.data.unitPrice) || 22.98)
         wx.hideLoading()
         wx.showToast({ title: '已创建', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 800)
@@ -80,9 +80,9 @@ Page({
       wx.showLoading({ title: '保存中...' })
       try {
         const newCats = categories.map(c => c === oldName ? name : c)
-        await api.saveCategories(newCats)
-        await api.setCategoryCredentials(name, this.data.username, this.data.password)
-        await api.setCategoryUnitPrice(name, parseFloat(this.data.unitPrice) || 22.98)
+        await api.saveCategoriesCB(newCats)
+        await api.setCategoryCredentialsCB(name, this.data.username, this.data.password)
+        await api.setCategoryUnitPriceCB(name, parseFloat(this.data.unitPrice) || 22.98)
         wx.hideLoading()
         wx.showToast({ title: '已保存', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 800)
@@ -106,7 +106,7 @@ Page({
 
     wx.showLoading({ title: '删除中...' })
     try {
-      await api.saveCategories(newCats)
+      await api.saveCategoriesCB(newCats)
       wx.hideLoading()
       wx.showToast({ title: '已删除', icon: 'success' })
       setTimeout(() => wx.navigateBack(), 800)

@@ -91,7 +91,7 @@ Page({
   async loadPasscodeStatus() {
     if (!app.globalData.openid) return
     try {
-      const res = await api.getUserPasscodeStatus(app.globalData.openid)
+      const res = await api.getUserPasscodeStatusCB(app.globalData.openid)
       if (!res.hasPasscode || !res.passcodes || res.passcodes.length === 0) {
         wx.removeStorageSync('selectedPasscodeId')
         this.setData({ passcodeStatusText: '未获得通行码', passcodeStatusColor: '#52525b' })
@@ -153,7 +153,7 @@ Page({
 
   async loadSwimSettings() {
     try {
-      const res = await api.getSwimSettings()
+      const res = await api.getSwimSettingsCB()
       this.setData({ swimEnabled: res.swimEnabled !== false })
     } catch {}
   },

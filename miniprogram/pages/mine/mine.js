@@ -101,7 +101,7 @@ Page({
     const openid = app.globalData.openid
     if (!openid) return
     try {
-      const stats = await api.getUserStats(openid)
+      const stats = await api.getUserStatsCB(openid)
       const checkinDates = stats.checkinDates || []
       const today = new Date()
       const todayStr = today.toISOString().slice(0, 10)
@@ -363,7 +363,7 @@ Page({
     if (!openid) return
     this.setData({ makeupLoading: true })
     try {
-      await api.manualCheckin(openid)
+      await api.manualCheckinCB(openid)
       wx.showToast({ title: '打卡成功', icon: 'success' })
       await this.loadStats()
     } catch (e) {
