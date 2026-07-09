@@ -24,7 +24,7 @@ Page({
   async loadQR() {
     try {
       const qr = await api.getQRUrlCB().catch(() => '')
-      this.setData({ qrUrl: qr || 'https://erdinger.top/api/swim/qr-image/qr.png?t=' + Date.now() })
+      if (qr) this.setData({ qrUrl: qr })
     } catch {}
   }
 })

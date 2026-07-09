@@ -111,7 +111,7 @@ Page({
       }
       this.setData({
         guideText: cfg.guideText || '',
-        qrPreview: await api.getQRUrlCB().catch(() => cfg.paymentQR ? `https://erdinger.top/api/swim/qr-image/qr.png?t=${Date.now()}` : ''),
+        qrPreview: await api.getQRUrlCB().catch(() => ''),
         swimEnabled: cfg.swimEnabled !== false
       })
     } catch { /* ignore */ }
@@ -156,14 +156,8 @@ Page({
       wx.showToast({ title: '上传成功', icon: 'success' })
     } catch(e) {
       wx.hideLoading()
-      console.error('Cloud upload failed, trying server:', e.message || e.errMsg)
-      try {
-        await api.uploadQR({ filePath: res.tempFilePaths[0] })
-        this.setData({ qrPreview: `https://erdinger.top/api/swim/qr-image/qr.png?t=${Date.now()}` })
-        wx.showToast({ title: '上传成功', icon: 'success' })
-      } catch(e2) {
-        wx.showToast({ title: '上传失败', icon: 'none' })
-      }
+      console.error('QR upload error:', e)
+      wx.showToast({ title: '上传失败', icon: 'none' })
     }
   },
 

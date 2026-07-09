@@ -112,21 +112,12 @@ Page({
 
   // ── 微信登录 ──
   async handleLogin() {
-    wx.showLoading({ title: '登录中...' })
-    try {
-      await app.doLogin()
-      wx.hideLoading()
-
-      const stored = wx.getStorageSync('userInfo') || {}
-      this.setData({
-        tempAvatar: app.globalData.avatar || stored.avatar || '',
-        tempNickname: app.globalData.nickname || stored.nickname || '',
-        status: 'needProfile'
-      })
-    } catch (e) {
-      wx.hideLoading()
-      wx.showToast({ title: '登录失败，请重试', icon: 'none' })
-    }
+    // 不在这里登录，只跳到资料设置页
+    this.setData({
+      tempAvatar: '',
+      tempNickname: '',
+      status: 'needProfile'
+    })
   },
 
   // ── 选择头像 ──
@@ -156,6 +147,11 @@ Page({
     if (!nickname || nickname === '微信用户' || nickname === '微信昵称') {
       wx.showToast({ title: '请点击昵称输入框获取微信昵称', icon: 'none' })
       return
+    }
+
+    // 确认资料后才真正登录
+    if (!app.globalData.openid) {
+      try { await app.doLogin() } catch { wx.showToast({ title: '登录失败', icon: 'none' }); return }
     }
 
     let avatarUrl = avatarPath
@@ -285,7 +281,7 @@ Page({
     try {
       const cfg = await api.getAdminConfigCB()
       const qr = await api.getQRUrlCB().catch(() => '')
-      this.setData({ qrUrl: qr || (cfg.paymentQR ? `https://erdinger.top/api/swim/qr-image/qr.png?t=${Date.now()}` : '') })
+      if (qr) this.setData({ qrUrl: qr })
       if (cfg.guideText) {
         this.setData({ guideLines: cfg.guideText.split('\n') })
       }

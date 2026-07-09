@@ -330,8 +330,6 @@ const getQRUrlCB = async () => {
       const res = await wx.cloud.getTempFileURL({ fileList: [cfg.qrFileID] })
       return res.fileList[0].tempFileURL || ''
     }
-    // fallback to old server URL
-    if (cfg.paymentQR) return 'https://erdinger.top/api/swim/qr-image/qr.png'
     return ''
   } catch { return '' }
 }
