@@ -155,6 +155,33 @@ module.exports = {
       })
     })
   }
+  getUserPasscodeStatusCB,
+  getSwimSettingsCB,
+  getBindStatusCB,
+  getCredentialsCB,
+  bindPasscodeCB,
+  confirmPaymentCB,
+  getAdminConfigCB,
+  verifyAdminCB,
+  updateAdminConfigCB,
+  updateAdminPasswordCB,
+  setCategoryCredentialsCB,
+  setCategoryUnitPriceCB,
+  saveCategoriesCB,
+  listPasscodesCB,
+  createPasscodeCB,
+  deletePasscodeCB,
+  unbindUserCB,
+  getPasscodeDetailCB,
+  listUsersCB,
+  getLogsCB,
+  getLeaderboardCB,
+  getUserStatsCB,
+  manualCheckinCB,
+  uploadAvatarCB,
+  uploadQRCB,
+  getQRUrlCB,
+  uploadAndSaveQR
 }
 
 async function getUserPasscodeStatusCB(openid) {
@@ -411,32 +438,3 @@ async function uploadAndSaveQR(filePath) {
   const urlRes = await wx.cloud.getTempFileURL({ fileList: [uploadRes.fileID] })
   return { url: urlRes.fileList[0].tempFileURL, fileID: uploadRes.fileID }
 }
-
-
-  getUserPasscodeStatusCB,
-  getSwimSettingsCB,
-  getBindStatusCB,
-  getCredentialsCB,
-  bindPasscodeCB,
-  confirmPaymentCB,
-  getAdminConfigCB,
-  verifyAdminCB,
-  updateAdminConfigCB,
-  updateAdminPasswordCB,
-  setCategoryCredentialsCB,
-  setCategoryUnitPriceCB,
-  saveCategoriesCB,
-  listPasscodesCB,
-  createPasscodeCB,
-  deletePasscodeCB,
-  unbindUserCB,
-  getPasscodeDetailCB,
-  listUsersCB,
-  getLogsCB,
-  getLeaderboardCB,
-  getUserStatsCB,
-  manualCheckinCB,
-  uploadAvatarCB,
-  uploadQRCB,
-  getQRUrlCB,
-  uploadAndSaveQR,
