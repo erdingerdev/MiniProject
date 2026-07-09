@@ -153,7 +153,7 @@ const saveCategoriesCB = async (categories) => {
   return { categories }
 }
 const listPasscodesCB = async () => {
-  const res = await getDb().collection('passcodes').where({ deleted: false }).get()
+  const res = await getDb().collection('passcodes').where({ deleted: false }).limit(1000).get()
   return res.data.map(p => ({
     id: p._id, name: p.name, type: p.type, maxUses: p.maxUses, expireAt: p.expireAt,
     category: p.category, createdAt: p.createdAt ? p.createdAt.slice(0, 19).replace('T', ' ') : '',
@@ -198,8 +198,8 @@ const getPasscodeDetailCB = async (id) => {
   return { usageCount: logs.data.length, boundUsers }
 }
 const listUsersCB = async () => {
-  const users = await getDb().collection('app_users').get()
-  const pcs = await getDb().collection('passcodes').where({ deleted: false }).get()
+  const users = await getDb().collection('app_users').limit(1000).get()
+  const pcs = await getDb().collection('passcodes').where({ deleted: false }).limit(1000).get()
   const pcMap = {}
   pcs.data.forEach(p => { pcMap[p._id] = p.name })
   return users.data.map(u => {
@@ -208,8 +208,8 @@ const listUsersCB = async () => {
   })
 }
 const getLogsCB = async () => {
-  const res = await getDb().collection('usage_logs').orderBy('timestamp', 'desc').limit(200).get()
-  const users = await getDb().collection('app_users').get()
+  const res = await getDb().collection('usage_logs').orderBy('timestamp', 'desc').limit(500).get()
+  const users = await getDb().collection('app_users').limit(1000).get()
   const userMap = {}
   users.data.forEach(u => { userMap[u.openid] = u.nickname })
   return res.data.map(l => ({
@@ -219,8 +219,8 @@ const getLogsCB = async () => {
   }))
 }
 const getLeaderboardCB = async () => {
-  const logs = await getDb().collection('usage_logs').get()
-  const users = await getDb().collection('app_users').get()
+  const logs = await getDb().collection('usage_logs').limit(1000).get()
+  const users = await getDb().collection('app_users').limit(1000).get()
   const userMap = {}
   users.data.forEach(u => { userMap[u.openid] = { nickname: u.nickname, avatar: u.avatar } })
   const stats = {}
@@ -274,6 +274,8 @@ const getQRUrlCB = async () => {
       const res = await wx.cloud.getTempFileURL({ fileList: [cfg.qrFileID] })
       return res.fileList[0].tempFileURL
     }
+    // fallback to old server URL
+    if (cfg.paymentQR) return 'https://erdinger.top/api/swim/qr-image/qr.png'
     return ''
   } catch { return '' }
 }
