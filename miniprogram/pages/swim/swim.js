@@ -169,8 +169,8 @@ Page({
           })
           uploadPath = compressRes.tempFilePath
         } catch {}
-        const res = await api.uploadAvatar(uploadPath)
-        avatarUrl = 'https://erdinger.top' + res.url
+        const res = await api.uploadAvatarCB(uploadPath)
+        avatarUrl = res.url
         wx.hideLoading()
       } catch {
         wx.hideLoading()
@@ -284,9 +284,8 @@ Page({
   async loadConfig() {
     try {
       const cfg = await api.getAdminConfigCB()
-      if (cfg.paymentQR) {
-        this.setData({ qrUrl: `https://erdinger.top/api/swim/qr-image/qr.png?t=${Date.now()}` })
-      }
+      const qrUrl = await api.getQRUrlCB()
+      if (qrUrl) { this.setData({ qrUrl }) }
       if (cfg.guideText) {
         this.setData({ guideLines: cfg.guideText.split('\n') })
       }

@@ -425,5 +425,42 @@ module.exports = {
         }
       })
     })
+  },
+
+  // ===== CloudBase 云存储 =====
+  // 上传头像到云存储
+  async uploadAvatarCB(filePath) {
+    const cloudPath = 'avatars/avatar-' + Date.now() + '.jpg'
+    const res = await wx.cloud.uploadFile({ cloudPath, filePath })
+    const urlRes = await wx.cloud.getTempFileURL({ fileList: [res.fileID] })
+    return { url: urlRes.fileList[0].tempFileURL, fileID: res.fileID }
+  },
+
+  // 上传收款码到云存储
+  async uploadQRCB(filePath) {
+    const res = await wx.cloud.uploadFile({ cloudPath: 'swim-qr/qr.png', filePath })
+    const urlRes = await wx.cloud.getTempFileURL({ fileList: [res.fileID] })
+    return { url: urlRes.fileList[0].tempFileURL, fileID: res.fileID }
+  },
+
+  // 从云存储获取收款码 URL
+  async getQRUrlCB() {
+    try {
+      const cfg = await this.getAdminConfigCB()
+      if (cfg.qrFileID) {
+        const res = await wx.cloud.getTempFileURL({ fileList: [cfg.qrFileID] })
+        return res.fileList[0].tempFileURL
+      }
+      return ''
+    } catch { return '' }
+  },
+
+  // 上传收款码并保存 fileID 到配置
+  async uploadAndSaveQR(filePath) {
+    const uploadRes = await wx.cloud.uploadFile({ cloudPath: 'swim-qr/qr.png', filePath })
+    await db.collection('app_config').doc('config').update({ data: { 'swimConfig.qrFileID': uploadRes.fileID } })
+    const urlRes = await wx.cloud.getTempFileURL({ fileList: [uploadRes.fileID] })
+    return { url: urlRes.fileList[0].tempFileURL, fileID: uploadRes.fileID }
   }
+}
 }

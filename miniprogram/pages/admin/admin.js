@@ -111,7 +111,7 @@ Page({
       }
       this.setData({
         guideText: cfg.guideText || '',
-        qrPreview: cfg.paymentQR ? `https://erdinger.top/api/swim/qr-image/qr.png` : '',
+        qrPreview: await api.getQRUrlCB().catch(() => ''),
         swimEnabled: cfg.swimEnabled !== false
       })
     } catch { /* ignore */ }
@@ -149,9 +149,9 @@ Page({
 
     wx.showLoading({ title: '上传中...' })
     try {
-      const data = await api.uploadQR({ filePath: res.tempFilePaths[0] })
+      const data = await api.uploadAndSaveQR(res.tempFilePaths[0])
       wx.hideLoading()
-      this.setData({ qrPreview: `https://erdinger.top/api/swim/qr-image/qr.png?t=${Date.now()}` })
+      this.setData({ qrPreview: data.url })
       wx.showToast({ title: '上传成功', icon: 'success' })
     } catch {
       wx.hideLoading()
