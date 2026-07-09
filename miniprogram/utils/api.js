@@ -153,8 +153,16 @@ const saveCategoriesCB = async (categories) => {
   return { categories }
 }
 const listPasscodesCB = async () => {
-  const res = await getDb().collection('passcodes').where({ deleted: false }).limit(1000).get()
-  return res.data.map(p => ({
+  const all = [], batchSize = 100
+  let skip = 0
+  while (true) {
+    const res = await getDb().collection('passcodes').where({ deleted: false }).skip(skip).limit(batchSize).get()
+    if (res.data.length === 0) break
+    all.push(...res.data)
+    if (res.data.length < batchSize) break
+    skip += batchSize
+  }
+  return all.map(p => ({
     id: p._id, name: p.name, type: p.type, maxUses: p.maxUses, expireAt: p.expireAt,
     category: p.category, createdAt: p.createdAt ? p.createdAt.slice(0, 19).replace('T', ' ') : '',
     usageCount: p.usageCount || 0
@@ -198,7 +206,16 @@ const getPasscodeDetailCB = async (id) => {
   return { usageCount: logs.data.length, boundUsers }
 }
 const listUsersCB = async () => {
-  const users = await getDb().collection('app_users').limit(1000).get()
+  const allUsers = [], batchSize = 100
+  let skip = 0
+  while (true) {
+    const res = await getDb().collection('app_users').skip(skip).limit(batchSize).get()
+    if (res.data.length === 0) break
+    allUsers.push(...res.data)
+    if (res.data.length < batchSize) break
+    skip += batchSize
+  }
+  const users = allUsers
   const pcs = await getDb().collection('passcodes').where({ deleted: false }).limit(1000).get()
   const pcMap = {}
   pcs.data.forEach(p => { pcMap[p._id] = p.name })
@@ -219,8 +236,25 @@ const getLogsCB = async () => {
   }))
 }
 const getLeaderboardCB = async () => {
-  const logs = await getDb().collection('usage_logs').limit(1000).get()
-  const users = await getDb().collection('app_users').limit(1000).get()
+  const allLogs = [], batchSize = 100
+  let skip = 0
+  while (true) {
+    const res = await getDb().collection('usage_logs').skip(skip).limit(batchSize).get()
+    if (res.data.length === 0) break
+    allLogs.push(...res.data)
+    if (res.data.length < batchSize) break
+    skip += batchSize
+  }
+  const logs = allLogs
+  const allUsers2 = [], skip2 = 0
+  while (true) {
+    const res = await getDb().collection('app_users').skip(skip2).limit(batchSize).get()
+    if (res.data.length === 0) break
+    allUsers2.push(...res.data)
+    if (res.data.length < batchSize) break
+    skip2 += batchSize
+  }
+  const users = allUsers2
   const userMap = {}
   users.data.forEach(u => { userMap[u.openid] = { nickname: u.nickname, avatar: u.avatar } })
   const stats = {}
