@@ -233,7 +233,7 @@ const listUsersCB = async () => {
 const getLogsCB = async () => {
   const allLogs = [], batchSize = 20, skip = 0
   while (true) {
-    const r = await getDb().collection('usage_logs').orderBy('timestamp', 'desc').skip(skip).limit(batchSize).get()
+    const r = await getDb().collection('usage_logs').skip(skip).limit(batchSize).get()
     if (r.data.length === 0) break
     allLogs.push(...r.data)
     if (r.data.length < batchSize) break
@@ -249,7 +249,7 @@ const getLogsCB = async () => {
   }
   const userMap = {}
   allUsers.forEach(u => { userMap[u.openid] = u.nickname })
-  return allLogs.map(l => ({
+  return allLogs.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || '')).map(l => ({
     id: l._id, openid: l.openid, passcodeId: l.passcodeId, passcodeName: l.passcodeName,
     peopleCount: l.peopleCount, formattedTime: l.timestamp ? l.timestamp.slice(0, 19).replace('T', ' ') : '',
     nickname: userMap[l.openid] || '匿名'
