@@ -216,20 +216,40 @@ const listUsersCB = async () => {
     skip += batchSize
   }
   const users = allUsers
-  const pcs = await getDb().collection('passcodes').where({ deleted: false }).limit(1000).get()
   const pcMap = {}
-  pcs.data.forEach(p => { pcMap[p._id] = p.name })
-  return users.data.map(u => {
+  let pcSkip = 0
+  while (true) {
+    const r = await getDb().collection('passcodes').where({ deleted: false }).skip(pcSkip).limit(batchSize).get()
+    if (r.data.length === 0) break
+    r.data.forEach(p => { pcMap[p._id] = p.name })
+    if (r.data.length < batchSize) break
+    pcSkip += batchSize
+  }
+  return users.map(u => {
     const names = (u.boundPasscodeIds || []).map(id => pcMap[id] || '').filter(Boolean)
     return { openid: u.openid, nickname: u.nickname, avatar: u.avatar, boundPasscodeName: names.join(', ') || '无' }
   })
 }
 const getLogsCB = async () => {
-  const res = await getDb().collection('usage_logs').orderBy('timestamp', 'desc').limit(500).get()
-  const users = await getDb().collection('app_users').limit(1000).get()
+  const allLogs = [], batchSize = 100, skip = 0
+  while (true) {
+    const r = await getDb().collection('usage_logs').orderBy('timestamp', 'desc').skip(skip).limit(batchSize).get()
+    if (r.data.length === 0) break
+    allLogs.push(...r.data)
+    if (r.data.length < batchSize) break
+    skip += batchSize
+  }
+  const allUsers = [], uSkip = 0
+  while (true) {
+    const r = await getDb().collection('app_users').skip(uSkip).limit(batchSize).get()
+    if (r.data.length === 0) break
+    allUsers.push(...r.data)
+    if (r.data.length < batchSize) break
+    uSkip += batchSize
+  }
   const userMap = {}
-  users.data.forEach(u => { userMap[u.openid] = u.nickname })
-  return res.data.map(l => ({
+  allUsers.forEach(u => { userMap[u.openid] = u.nickname })
+  return allLogs.map(l => ({
     id: l._id, openid: l.openid, passcodeId: l.passcodeId, passcodeName: l.passcodeName,
     peopleCount: l.peopleCount, formattedTime: l.timestamp ? l.timestamp.slice(0, 19).replace('T', ' ') : '',
     nickname: userMap[l.openid] || '匿名'
@@ -256,9 +276,9 @@ const getLeaderboardCB = async () => {
   }
   const users = allUsers2
   const userMap = {}
-  users.data.forEach(u => { userMap[u.openid] = { nickname: u.nickname, avatar: u.avatar } })
+  users.forEach(u => { userMap[u.openid] = { nickname: u.nickname, avatar: u.avatar } })
   const stats = {}
-  logs.data.forEach(l => {
+  logs.forEach(l => {
     if (!stats[l.openid]) stats[l.openid] = { count: 0 }
     stats[l.openid].count += (l.peopleCount || 1)
   })
