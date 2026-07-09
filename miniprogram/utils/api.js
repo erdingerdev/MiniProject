@@ -153,7 +153,7 @@ const saveCategoriesCB = async (categories) => {
   return { categories }
 }
 const listPasscodesCB = async () => {
-  const all = [], batchSize = 100
+  const all = [], batchSize = 20
   let skip = 0
   while (true) {
     const res = await getDb().collection('passcodes').where({ deleted: false }).skip(skip).limit(batchSize).get()
@@ -206,7 +206,7 @@ const getPasscodeDetailCB = async (id) => {
   return { usageCount: logs.data.length, boundUsers }
 }
 const listUsersCB = async () => {
-  const allUsers = [], batchSize = 100
+  const allUsers = [], batchSize = 20
   let skip = 0
   while (true) {
     const res = await getDb().collection('app_users').skip(skip).limit(batchSize).get()
@@ -231,7 +231,7 @@ const listUsersCB = async () => {
   })
 }
 const getLogsCB = async () => {
-  const allLogs = [], batchSize = 100, skip = 0
+  const allLogs = [], batchSize = 20, skip = 0
   while (true) {
     const r = await getDb().collection('usage_logs').orderBy('timestamp', 'desc').skip(skip).limit(batchSize).get()
     if (r.data.length === 0) break
@@ -256,7 +256,7 @@ const getLogsCB = async () => {
   }))
 }
 const getLeaderboardCB = async () => {
-  const allLogs = [], batchSize = 100
+  const allLogs = [], batchSize = 20
   let skip = 0
   while (true) {
     const res = await getDb().collection('usage_logs').skip(skip).limit(batchSize).get()
