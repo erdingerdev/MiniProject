@@ -154,7 +154,7 @@ module.exports = {
         }
       })
     })
-  }
+  },
   getUserPasscodeStatusCB,
   getSwimSettingsCB,
   getBindStatusCB,
