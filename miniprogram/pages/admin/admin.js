@@ -150,9 +150,9 @@ Page({
 
     wx.showLoading({ title: '上传中...' })
     try {
-      const data = await api.uploadAndSaveQR(res.tempFilePaths[0])
+      await api.uploadQR({ filePath: res.tempFilePaths[0] })
       wx.hideLoading()
-      this.setData({ qrPreview: data.url })
+      this.setData({ qrPreview: `https://erdinger.top/api/swim/qr-image/qr.png?t=${Date.now()}` })
       wx.showToast({ title: '上传成功', icon: 'success' })
     } catch {
       wx.hideLoading()

@@ -122,13 +122,8 @@ const updateAdminConfigCB = async (data) => {
   if (data.guideText !== undefined) updates['swimConfig.guideText'] = data.guideText
   if (data.swimEnabled !== undefined) updates['swimConfig.swimEnabled'] = data.swimEnabled
   if (data.categories !== undefined) updates.categories = data.categories
-  try {
-    await getDb().collection('app_config').doc('config').update({ data: updates })
-    return { ok: true }
-  } catch(e) {
-    console.error('updateAdminConfigCB error:', e)
-    throw e
-  }
+  await getDb().collection('app_config').doc('config').update({ data: updates })
+  return { ok: true }
 }
 const updateAdminPasswordCB = async (newPassword) => {
   await getDb().collection('app_config').doc('config').update({ data: { adminPassword: newPassword } })
@@ -333,7 +328,7 @@ const getQRUrlCB = async () => {
     const cfg = await getAdminConfigCB()
     if (cfg.qrFileID) {
       const res = await wx.cloud.getTempFileURL({ fileList: [cfg.qrFileID] })
-      return (res.fileList[0].tempFileURL || '') + '?t=' + Date.now()
+      return res.fileList[0].tempFileURL || ''
     }
     // fallback to old server URL
     if (cfg.paymentQR) return 'https://erdinger.top/api/swim/qr-image/qr.png'
