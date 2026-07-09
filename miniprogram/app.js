@@ -56,8 +56,10 @@ App({
           clearTimeout(timeout)
           done = true
           try {
-            const data = await api.wxLogin(loginRes.code)
-            this.globalData.token = data.token
+            const res = await wx.cloud.callFunction({ name: 'wxLogin', data: { code: loginRes.code } })
+            const data = res.result
+            if (data.error) { reject(new Error(data.error)); return }
+            this.globalData.token = 'cb_' + data.openid
             this.globalData.openid = data.openid
             resolve(data.openid)
           } catch (e) {
