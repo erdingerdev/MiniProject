@@ -27,7 +27,7 @@ function request(method, path, data) {
 
   // ===== CloudBase 原生方法 =====
   // 获取用户通行证状态
-  async getUserPasscodeStatusCB(openid) {
+  getUserPasscodeStatusCB: async function(openid) {
     if (!db) throw new Error('CloudBase 未初始化')
     const userRes = await db.collection('app_users').where({ openid }).get()
     if (userRes.data.length === 0) return { hasPasscode: false, passcodes: [] }
@@ -44,7 +44,7 @@ function request(method, path, data) {
   },
 
   // 获取游泳设置
-  async getSwimSettingsCB() {
+  getSwimSettingsCB: async function() {
     if (!db) throw new Error('CloudBase 未初始化')
     const res = await db.collection('app_config').doc('config').get()
     const cfg = res.data
@@ -52,7 +52,7 @@ function request(method, path, data) {
   },
 
   // 获取绑定状态 + 通行证列表
-  async getBindStatusCB(openid) {
+  getBindStatusCB: async function(openid) {
     if (!db) throw new Error('CloudBase 未初始化')
     const userRes = await db.collection('app_users').where({ openid }).get()
     const ids = (userRes.data[0] && userRes.data[0].boundPasscodeIds) || []
@@ -69,7 +69,7 @@ function request(method, path, data) {
   },
 
   // 获取账号密码
-  async getCredentialsCB(passcodeId, openid) {
+  getCredentialsCB: async function(passcodeId, openid) {
     if (!db) throw new Error('CloudBase 未初始化')
     const pc = await db.collection('passcodes').doc(passcodeId).get()
     if (!pc.data || pc.data.deleted) throw new Error('passcode not found')
@@ -79,7 +79,7 @@ function request(method, path, data) {
   },
 
   // 绑定通行码
-  async bindPasscodeCB(codeName, openid, nickname, avatar) {
+  bindPasscodeCB: async function(codeName, openid, nickname, avatar) {
     if (!db) throw new Error('CloudBase 未初始化')
     const pcRes = await db.collection('passcodes').where({ name: codeName, deleted: false }).get()
     if (pcRes.data.length === 0) throw { error: '通行码不存在' }
@@ -104,7 +104,7 @@ function request(method, path, data) {
   },
 
   // 确认付款 + 记录日志
-  async confirmPaymentCB(openid, passcodeId, passcodeName, peopleCount) {
+  confirmPaymentCB: async function(openid, passcodeId, passcodeName, peopleCount) {
     if (!db) throw new Error('CloudBase 未初始化')
     await db.collection('usage_logs').add({ data: {
       openid, passcodeId, passcodeName, peopleCount, timestamp: new Date().toISOString()
@@ -113,7 +113,7 @@ function request(method, path, data) {
   },
 
   // 获取完整配置（收款码、引导文案等）
-  async getAdminConfigCB() {
+  getAdminConfigCB: async function() {
     if (!db) throw new Error('CloudBase 未初始化')
     const res = await db.collection('app_config').doc('config').get()
     const cfg = res.data
@@ -125,13 +125,13 @@ function request(method, path, data) {
   },
 
   // 验证管理员密码
-  async verifyAdminCB(password) {
+  verifyAdminCB: async function(password) {
     const res = await db.collection('app_config').doc('config').get()
     return { ok: res.data.adminPassword === password }
   },
 
   // 更新配置
-  async updateAdminConfigCB(data) {
+  updateAdminConfigCB: async function(data) {
     const cfg = await db.collection('app_config').doc('config').get()
     const updates = {}
     if (data.paymentQR !== undefined) updates['swimConfig.paymentQR'] = data.paymentQR
@@ -142,12 +142,12 @@ function request(method, path, data) {
     return { ok: true }
   },
 
-  async updateAdminPasswordCB(newPassword) {
+  updateAdminPasswordCB: async function(newPassword) {
     await db.collection('app_config').doc('config').update({ data: { adminPassword: newPassword } })
     return { ok: true }
   },
 
-  async setCategoryCredentialsCB(category, username, password) {
+  setCategoryCredentialsCB: async function(category, username, password) {
     const cfg = await db.collection('app_config').doc('config').get()
     const creds = cfg.data.categoryCredentials || {}
     creds[category] = { ...(creds[category] || {}), username, password }
@@ -155,7 +155,7 @@ function request(method, path, data) {
     return { ok: true }
   },
 
-  async setCategoryUnitPriceCB(category, unitPrice) {
+  setCategoryUnitPriceCB: async function(category, unitPrice) {
     const cfg = await db.collection('app_config').doc('config').get()
     const creds = cfg.data.categoryCredentials || {}
     creds[category] = { ...(creds[category] || {}), unitPrice }
@@ -163,7 +163,7 @@ function request(method, path, data) {
     return { ok: true }
   },
 
-  async saveCategoriesCB(categories) {
+  saveCategoriesCB: async function(categories) {
     const cfg = await db.collection('app_config').doc('config').get()
     const creds = cfg.data.categoryCredentials || {}
     for (const cat of Object.keys(creds)) {
@@ -174,7 +174,7 @@ function request(method, path, data) {
   },
 
   // 通行码管理
-  async listPasscodesCB() {
+  listPasscodesCB: async function() {
     const res = await db.collection('passcodes').where({ deleted: false }).get()
     return res.data.map(p => {
       const today = new Date().toISOString().slice(0, 10)
@@ -186,7 +186,7 @@ function request(method, path, data) {
     })
   },
 
-  async createPasscodeCB(data) {
+  createPasscodeCB: async function(data) {
     const dup = await db.collection('passcodes').where({ name: data.name, deleted: false }).get()
     if (dup.data.length > 0) throw { error: '该名称已被使用' }
     const res = await db.collection('passcodes').add({ data: {
@@ -197,7 +197,7 @@ function request(method, path, data) {
     return { id: res._id, ...data }
   },
 
-  async deletePasscodeCB(id) {
+  deletePasscodeCB: async function(id) {
     await db.collection('passcodes').doc(id).update({ data: { deleted: true } })
     const userRes = await db.collection('app_users').where({ boundPasscodeIds: id }).get()
     for (const user of userRes.data) {
@@ -208,7 +208,7 @@ function request(method, path, data) {
     return { ok: true }
   },
 
-  async unbindUserCB(openid, passcodeId) {
+  unbindUserCB: async function(openid, passcodeId) {
     const userRes = await db.collection('app_users').where({ openid }).get()
     if (userRes.data.length > 0) {
       await db.collection('app_users').doc(userRes.data[0]._id).update({
@@ -218,7 +218,7 @@ function request(method, path, data) {
     return { ok: true }
   },
 
-  async getPasscodeDetailCB(id) {
+  getPasscodeDetailCB: async function(id) {
     const pc = await db.collection('passcodes').doc(id).get()
     if (!pc.data || pc.data.deleted) throw { error: 'not found' }
     const users = await db.collection('app_users').where({ boundPasscodeIds: id }).get()
@@ -231,7 +231,7 @@ function request(method, path, data) {
     return { usageCount: logs.data.length, boundUsers }
   },
 
-  async listUsersCB() {
+  listUsersCB: async function() {
     const users = await db.collection('app_users').get()
     const pcs = await db.collection('passcodes').where({ deleted: false }).get()
     const pcMap = {}
@@ -245,7 +245,7 @@ function request(method, path, data) {
     })
   },
 
-  async getLogsCB() {
+  getLogsCB: async function() {
     const res = await db.collection('usage_logs').orderBy('timestamp', 'desc').limit(200).get()
     const users = await db.collection('app_users').get()
     const userMap = {}
@@ -258,7 +258,7 @@ function request(method, path, data) {
   },
 
   // 排行榜
-  async getLeaderboardCB() {
+  getLeaderboardCB: async function() {
     const logs = await db.collection('usage_logs').get()
     const users = await db.collection('app_users').get()
     const userMap = {}
@@ -277,7 +277,7 @@ function request(method, path, data) {
   },
 
   // 打卡/统计
-  async getUserStatsCB(openid) {
+  getUserStatsCB: async function(openid) {
     const logs = await db.collection('usage_logs').where({ openid }).get()
     let lastDate = null
     logs.data.forEach(l => {
@@ -289,7 +289,7 @@ function request(method, path, data) {
     return { lastCheckinDate: lastDate, todayChecked: todayCount > 0, todayCount }
   },
 
-  async manualCheckinCB(openid) {
+  manualCheckinCB: async function(openid) {
     await db.collection('usage_logs').add({ data: {
       openid, passcodeId: 'manual', passcodeName: '手动打卡', peopleCount: 1, timestamp: new Date().toISOString()
     }})
@@ -429,7 +429,7 @@ module.exports = {
 
   // ===== CloudBase 云存储 =====
   // 上传头像到云存储
-  async uploadAvatarCB(filePath) {
+  uploadAvatarCB: async function(filePath) {
     const cloudPath = 'avatars/avatar-' + Date.now() + '.jpg'
     const res = await wx.cloud.uploadFile({ cloudPath, filePath })
     const urlRes = await wx.cloud.getTempFileURL({ fileList: [res.fileID] })
@@ -437,14 +437,14 @@ module.exports = {
   },
 
   // 上传收款码到云存储
-  async uploadQRCB(filePath) {
+  uploadQRCB: async function(filePath) {
     const res = await wx.cloud.uploadFile({ cloudPath: 'swim-qr/qr.png', filePath })
     const urlRes = await wx.cloud.getTempFileURL({ fileList: [res.fileID] })
     return { url: urlRes.fileList[0].tempFileURL, fileID: res.fileID }
   },
 
   // 从云存储获取收款码 URL
-  async getQRUrlCB() {
+  getQRUrlCB: async function() {
     try {
       const cfg = await this.getAdminConfigCB()
       if (cfg.qrFileID) {
@@ -456,7 +456,7 @@ module.exports = {
   },
 
   // 上传收款码并保存 fileID 到配置
-  async uploadAndSaveQR(filePath) {
+  uploadAndSaveQR: async function(filePath) {
     const uploadRes = await wx.cloud.uploadFile({ cloudPath: 'swim-qr/qr.png', filePath })
     await db.collection('app_config').doc('config').update({ data: { 'swimConfig.qrFileID': uploadRes.fileID } })
     const urlRes = await wx.cloud.getTempFileURL({ fileList: [uploadRes.fileID] })
