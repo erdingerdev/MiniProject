@@ -1,6 +1,6 @@
 const BASE = 'https://erdinger.top/api'
 
-// ── CloudBase 数据库实例 ──
+// ── CloudBase DB ──
 const db = wx.cloud ? wx.cloud.database() : null
 const _ = db ? db.command : null
 
@@ -30,63 +30,88 @@ module.exports = {
   // 微信登录
   wxLogin(code) {
     return request('POST', '/login', { code })
+  },
 
   // ===== 游泳票 =====
   bindPasscode(codeName, openid, nickname, avatar) {
     return request('POST', '/swim/bind', { codeName, openid, nickname, avatar })
+  },
   getCredentials(passcodeId, openid) {
     let query = ''
     if (passcodeId) query = `?passcodeId=${passcodeId}`
     else if (openid) query = `?openid=${openid}`
     return request('GET', '/swim/credentials' + query)
+  },
   confirmPayment(openid, passcodeId, passcodeName, peopleCount) {
     return request('POST', '/swim/confirm', { openid, passcodeId, passcodeName, peopleCount })
+  },
   getBindStatus(openid) {
     return request('GET', `/swim/status?openid=${openid}`)
+  },
   getSwimSettings() {
     return request('GET', '/swim/settings')
+  },
   getUserPasscodeStatus(openid) {
     return request('GET', `/user/status?openid=${openid}`)
+  },
   updateProfile(openid, nickname, avatar) {
     return request('POST', '/user/profile', { openid, nickname, avatar })
+  },
 
   // ===== 管理端 =====
   verifyAdmin(password) {
     return request('POST', '/admin/verify', { password })
+  },
   getAdminConfig() {
     return request('GET', '/admin/config')
+  },
   saveCategories(categories) {
     return request('POST', '/admin/config', { action: 'saveCategories', categories })
+  },
   setCategoryCredentials(category, username, password) {
     return request('POST', '/admin/config', { action: 'setCategoryCredentials', category, username, password })
+  },
   setCategoryUnitPrice(category, unitPrice) {
     return request('POST', '/admin/config', { action: 'setCategoryUnitPrice', category, unitPrice })
+  },
   updateAdminConfig(data) {
     return request('POST', '/admin/config', data)
+  },
   updateAdminPassword(newPassword) {
     return request('POST', '/admin/config', { action: 'updateAdminPassword', newPassword })
+  },
   listPasscodes() {
     return request('GET', '/admin/passcodes')
+  },
   createPasscode(data) {
     return request('POST', '/admin/passcodes', data)
+  },
   deletePasscode(id) {
     return request('DELETE', `/admin/passcodes?id=${id}`)
+  },
   unbindUser(openid, passcodeId) {
     return request('POST', '/admin/passcodes', { action: 'unbindUser', openid, passcodeId })
+  },
   getPasscodeDetail(id) {
     return request('GET', `/admin/passcodes?id=${id}`)
+  },
   listUsers() {
     return request('GET', '/admin/users')
+  },
   getLogs() {
     return request('GET', '/admin/logs')
+  },
   getLeaderboard() {
     return request('GET', '/leaderboard')
+  },
 
   // ===== 打卡/统计 =====
   getUserStats(openid) {
     return request('GET', `/user/stats?openid=${openid}`)
+  },
   manualCheckin(openid) {
     return request('POST', '/user/checkin', { openid })
+  },
   uploadAvatar(filePath) {
     return new Promise((resolve, reject) => {
       wx.uploadFile({
@@ -104,11 +129,13 @@ module.exports = {
           } catch (e) {
             reject(res)
           }
+        },
         fail(err) {
           reject(err)
         }
       })
     })
+  },
   uploadQR(formData) {
     return new Promise((resolve, reject) => {
       wx.uploadFile({
@@ -121,15 +148,13 @@ module.exports = {
           } catch (e) {
             reject(res)
           }
+        },
         fail(err) {
           reject(err)
         }
       })
     })
   }
-
-// ===== CloudBase 原生方法 =====
-
 async function getUserPasscodeStatusCB(openid) {
   if (!db) throw new Error('CloudBase 未初始化')
   const userRes = await db.collection('app_users').where({ openid }).get()
@@ -145,14 +170,12 @@ async function getUserPasscodeStatusCB(openid) {
   const active = passcodes.filter(p => p.status === 'active')
   return { hasPasscode: passcodes.length > 0, passcodes, activeCount: active.length }
 }
-
 async function getSwimSettingsCB() {
   if (!db) throw new Error('CloudBase 未初始化')
   const res = await db.collection('app_config').doc('config').get()
   const cfg = res.data
   return { swimEnabled: (cfg.swimConfig && cfg.swimConfig.swimEnabled !== false) }
 }
-
 async function getBindStatusCB(openid) {
   if (!db) throw new Error('CloudBase 未初始化')
   const userRes = await db.collection('app_users').where({ openid }).get()
@@ -168,7 +191,6 @@ async function getBindStatusCB(openid) {
   })
   return { bound: passcodes.some(p => p.valid), passcodes, validCount: passcodes.filter(p => p.valid).length }
 }
-
 async function getCredentialsCB(passcodeId, openid) {
   if (!db) throw new Error('CloudBase 未初始化')
   const pc = await db.collection('passcodes').doc(passcodeId).get()
@@ -177,7 +199,6 @@ async function getCredentialsCB(passcodeId, openid) {
   const creds = (cfgRes.data.categoryCredentials || {})[pc.data.category] || {}
   return { username: creds.username || '', password: creds.password || '', unitPrice: creds.unitPrice || 22.98 }
 }
-
 async function bindPasscodeCB(codeName, openid, nickname, avatar) {
   if (!db) throw new Error('CloudBase 未初始化')
   const pcRes = await db.collection('passcodes').where({ name: codeName, deleted: false }).get()
@@ -200,7 +221,6 @@ async function bindPasscodeCB(codeName, openid, nickname, avatar) {
   }
   return await getBindStatusCB(openid)
 }
-
 async function confirmPaymentCB(openid, passcodeId, passcodeName, peopleCount) {
   if (!db) throw new Error('CloudBase 未初始化')
   await db.collection('usage_logs').add({ data: {
@@ -208,7 +228,6 @@ async function confirmPaymentCB(openid, passcodeId, passcodeName, peopleCount) {
   }})
   return { ok: true }
 }
-
 async function getAdminConfigCB() {
   if (!db) throw new Error('CloudBase 未初始化')
   const res = await db.collection('app_config').doc('config').get()
@@ -219,12 +238,10 @@ async function getAdminConfigCB() {
     categoryCredentials: cfg.categoryCredentials || {}
   }
 }
-
 async function verifyAdminCB(password) {
   const res = await db.collection('app_config').doc('config').get()
   return { ok: res.data.adminPassword === password }
 }
-
 async function updateAdminConfigCB(data) {
   const updates = {}
   if (data.paymentQR !== undefined) updates['swimConfig.paymentQR'] = data.paymentQR
@@ -234,12 +251,10 @@ async function updateAdminConfigCB(data) {
   await db.collection('app_config').doc('config').update({ data: updates })
   return { ok: true }
 }
-
 async function updateAdminPasswordCB(newPassword) {
   await db.collection('app_config').doc('config').update({ data: { adminPassword: newPassword } })
   return { ok: true }
 }
-
 async function setCategoryCredentialsCB(category, username, password) {
   const cfg = await db.collection('app_config').doc('config').get()
   const creds = cfg.data.categoryCredentials || {}
@@ -247,7 +262,6 @@ async function setCategoryCredentialsCB(category, username, password) {
   await db.collection('app_config').doc('config').update({ data: { categoryCredentials: creds } })
   return { ok: true }
 }
-
 async function setCategoryUnitPriceCB(category, unitPrice) {
   const cfg = await db.collection('app_config').doc('config').get()
   const creds = cfg.data.categoryCredentials || {}
@@ -255,7 +269,6 @@ async function setCategoryUnitPriceCB(category, unitPrice) {
   await db.collection('app_config').doc('config').update({ data: { categoryCredentials: creds } })
   return { ok: true }
 }
-
 async function saveCategoriesCB(categories) {
   const cfg = await db.collection('app_config').doc('config').get()
   const creds = cfg.data.categoryCredentials || {}
@@ -265,7 +278,6 @@ async function saveCategoriesCB(categories) {
   await db.collection('app_config').doc('config').update({ data: { categories, categoryCredentials: creds } })
   return { categories }
 }
-
 async function listPasscodesCB() {
   const res = await db.collection('passcodes').where({ deleted: false }).get()
   return res.data.map(p => ({
@@ -274,7 +286,6 @@ async function listPasscodesCB() {
     usageCount: p.usageCount || 0
   }))
 }
-
 async function createPasscodeCB(data) {
   const dup = await db.collection('passcodes').where({ name: data.name, deleted: false }).get()
   if (dup.data.length > 0) throw { error: '该名称已被使用' }
@@ -285,7 +296,6 @@ async function createPasscodeCB(data) {
   }})
   return { id: res._id }
 }
-
 async function deletePasscodeCB(id) {
   await db.collection('passcodes').doc(id).update({ data: { deleted: true } })
   const userRes = await db.collection('app_users').where({ boundPasscodeIds: id }).get()
@@ -294,7 +304,6 @@ async function deletePasscodeCB(id) {
   }
   return { ok: true }
 }
-
 async function unbindUserCB(openid, passcodeId) {
   const userRes = await db.collection('app_users').where({ openid }).get()
   if (userRes.data.length > 0) {
@@ -302,7 +311,6 @@ async function unbindUserCB(openid, passcodeId) {
   }
   return { ok: true }
 }
-
 async function getPasscodeDetailCB(id) {
   const pc = await db.collection('passcodes').doc(id).get()
   if (!pc.data || pc.data.deleted) throw { error: 'not found' }
@@ -315,7 +323,6 @@ async function getPasscodeDetailCB(id) {
   })
   return { usageCount: logs.data.length, boundUsers }
 }
-
 async function listUsersCB() {
   const users = await db.collection('app_users').get()
   const pcs = await db.collection('passcodes').where({ deleted: false }).get()
@@ -326,7 +333,6 @@ async function listUsersCB() {
     return { openid: u.openid, nickname: u.nickname, avatar: u.avatar, boundPasscodeName: names.join(', ') || '无' }
   })
 }
-
 async function getLogsCB() {
   const res = await db.collection('usage_logs').orderBy('timestamp', 'desc').limit(200).get()
   const users = await db.collection('app_users').get()
@@ -338,7 +344,6 @@ async function getLogsCB() {
     nickname: userMap[l.openid] || '匿名'
   }))
 }
-
 async function getLeaderboardCB() {
   const logs = await db.collection('usage_logs').get()
   const users = await db.collection('app_users').get()
@@ -355,7 +360,6 @@ async function getLeaderboardCB() {
   })
   return Object.entries(stats).map(([openid, s]) => ({ openid, ...s })).sort((a, b) => b.count - a.count).slice(0, 50)
 }
-
 async function getUserStatsCB(openid) {
   const logs = await db.collection('usage_logs').where({ openid }).get()
   const checkinDates = [...new Set(logs.data.map(l => l.timestamp ? l.timestamp.slice(0, 10) : '').filter(Boolean))]
@@ -372,27 +376,23 @@ async function getUserStatsCB(openid) {
   const todayChecked = checkinDates.includes(today)
   return { checkinDates, totalCount: logs.data.length, maxStreak, todayChecked, timestamps: logs.data.map(l => l.timestamp) }
 }
-
 async function manualCheckinCB(openid) {
   await db.collection('usage_logs').add({ data: {
     openid, passcodeId: 'manual', passcodeName: '手动打卡', peopleCount: 1, timestamp: new Date().toISOString()
   }})
   return { ok: true }
 }
-
 async function uploadAvatarCB(filePath) {
   const cloudPath = 'avatars/avatar-' + Date.now() + '.jpg'
   const res = await wx.cloud.uploadFile({ cloudPath, filePath })
   const urlRes = await wx.cloud.getTempFileURL({ fileList: [res.fileID] })
   return { url: urlRes.fileList[0].tempFileURL, fileID: res.fileID }
 }
-
 async function uploadQRCB(filePath) {
   const res = await wx.cloud.uploadFile({ cloudPath: 'swim-qr/qr.png', filePath })
   const urlRes = await wx.cloud.getTempFileURL({ fileList: [res.fileID] })
   return { url: urlRes.fileList[0].tempFileURL, fileID: res.fileID }
 }
-
 async function getQRUrlCB() {
   try {
     const cfg = await getAdminConfigCB()
@@ -403,7 +403,6 @@ async function getQRUrlCB() {
     return ''
   } catch { return '' }
 }
-
 async function uploadAndSaveQR(filePath) {
   const uploadRes = await wx.cloud.uploadFile({ cloudPath: 'swim-qr/qr.png', filePath })
   await db.collection('app_config').doc('config').update({ data: { 'swimConfig.qrFileID': uploadRes.fileID } })
