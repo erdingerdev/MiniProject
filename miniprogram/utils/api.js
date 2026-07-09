@@ -32,14 +32,20 @@ module.exports = {
   bindPasscode(codeName, openid, nickname, avatar) {
     return request('POST', '/swim/bind', { codeName, openid, nickname, avatar })
   },
-  getCredentials() {
-    return request('GET', '/swim/credentials')
+  getCredentials(passcodeId, openid) {
+    let query = ''
+    if (passcodeId) query = `?passcodeId=${passcodeId}`
+    else if (openid) query = `?openid=${openid}`
+    return request('GET', '/swim/credentials' + query)
   },
   confirmPayment(openid, passcodeId, passcodeName, peopleCount) {
     return request('POST', '/swim/confirm', { openid, passcodeId, passcodeName, peopleCount })
   },
   getBindStatus(openid) {
     return request('GET', `/swim/status?openid=${openid}`)
+  },
+  getSwimSettings() {
+    return request('GET', '/swim/settings')
   },
   getUserPasscodeStatus(openid) {
     return request('GET', `/user/status?openid=${openid}`)
@@ -55,6 +61,15 @@ module.exports = {
   getAdminConfig() {
     return request('GET', '/admin/config')
   },
+  saveCategories(categories) {
+    return request('POST', '/admin/config', { action: 'saveCategories', categories })
+  },
+  setCategoryCredentials(category, username, password) {
+    return request('POST', '/admin/config', { action: 'setCategoryCredentials', category, username, password })
+  },
+  setCategoryUnitPrice(category, unitPrice) {
+    return request('POST', '/admin/config', { action: 'setCategoryUnitPrice', category, unitPrice })
+  },
   updateAdminConfig(data) {
     return request('POST', '/admin/config', data)
   },
@@ -69,6 +84,9 @@ module.exports = {
   },
   deletePasscode(id) {
     return request('DELETE', `/admin/passcodes?id=${id}`)
+  },
+  unbindUser(openid, passcodeId) {
+    return request('POST', '/admin/passcodes', { action: 'unbindUser', openid, passcodeId })
   },
   getPasscodeDetail(id) {
     return request('GET', `/admin/passcodes?id=${id}`)

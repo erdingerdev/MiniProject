@@ -6,7 +6,7 @@
   padding: 0 48rpx;
   position: relative;
   overflow: hidden;
-  background: #080b11;
+  background: var(--bg-gradient, var(--bg));
 }
 
 /* ── 背景光球 ── */
@@ -53,7 +53,7 @@
 .dot {
   position: absolute;
   border-radius: 50%;
-  background: #22d3ee;
+  background: var(--accent);
   animation: twinkle 3s ease-in-out infinite alternate;
 }
 @keyframes twinkle {
@@ -69,7 +69,7 @@
   align-items: center;
   padding: 24rpx 0;
   width: 100%;
-  margin-top: 80rpx;
+  margin-top: 92rpx;
 }
 .user-avatar {
   width: 56rpx;
@@ -79,7 +79,7 @@
   flex-shrink: 0;
 }
 .user-avatar.placeholder {
-  background: rgba(255,255,255,0.08);
+  background: var(--border);
 }
 .user-info {
   display: flex;
@@ -87,7 +87,7 @@
 }
 .user-name {
   font-size: 26rpx;
-  color: #a1a1aa;
+  color: var(--text-dim);
 }
 .status-row {
   display: flex;
@@ -120,13 +120,22 @@
 }
 .passcode-status {
   font-size: 22rpx;
-  color: #a1a1aa;
+  color: var(--text-dim);
 }
 .inactive-reminder {
   font-size: 22rpx;
   color: #fbbf24;
   margin-top: 6rpx;
   line-height: 1.4;
+}
+
+/* ── 用户状态（独立，不影响头像位置） ── */
+.user-status {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  padding-left: 0;
+  margin-top: -8rpx;
 }
 
 /* ── 标题 ── */
@@ -140,7 +149,7 @@
   display: block;
   font-size: 72rpx;
   font-weight: 700;
-  background: linear-gradient(90deg, #22d3ee, #60a5fa, #a78bfa, #22d3ee);
+  background: linear-gradient(90deg, var(--accent), #60a5fa, #a78bfa, var(--accent));
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -155,8 +164,12 @@
 }
 .hero-sub {
   font-size: 26rpx;
-  color: #71717a;
+  color: var(--text-dim);
   letter-spacing: 4rpx;
+}
+
+.theme-light .hero-sub {
+  color: rgba(255,255,255,0.75);
 }
 
 /* ── 入口宫格 ── */
@@ -172,8 +185,8 @@
 .card {
   flex: 1 1 280rpx;
   min-width: 260rpx;
-  background: rgba(255,255,255,0.04);
-  border: 1rpx solid rgba(255,255,255,0.08);
+  background: var(--bg-card2);
+  border: 1rpx solid var(--border);
   border-radius: 24rpx;
   padding: 48rpx 32rpx;
   display: flex;
@@ -197,7 +210,7 @@
 }
 .card:active {
   background: rgba(6,182,212,0.1);
-  border-color: rgba(6,182,212,0.3);
+  border-color: var(--accent-border);
   transform: scale(0.96) !important;
 }
 /* ── 卡片行 ── */
@@ -217,8 +230,8 @@
 }
 
 .card-icon { font-size: 56rpx; margin-bottom: 24rpx; }
-.card-title { font-size: 32rpx; font-weight: 600; color: #e4e4e7; margin-bottom: 12rpx; }
-.card-desc { font-size: 24rpx; color: #71717a; }
+.card-title { font-size: 32rpx; font-weight: 600; color: var(--text); margin-bottom: 12rpx; }
+.card-desc { font-size: 24rpx; color: var(--text-dim); }
 
 /* ── 底部 ── */
 .footer {
@@ -229,6 +242,299 @@
 }
 .footer text {
   font-size: 22rpx;
-  color: #3f3f46;
+  color: var(--text-dim);
   letter-spacing: 6rpx;
+}
+
+/* ── 日/夜间切换按钮 ── */
+.theme-toggle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 200rpx;
+  height: 76rpx;
+  border-radius: 76rpx;
+  z-index: 100;
+  --dark: 0;
+  /* 日间天蓝 #5a81b4 → 夜间深蓝 #2b303e */
+  background: hsl(204, calc(53% - var(--dark) * 28%), calc(47% - var(--dark) * 31%));
+  /* 三层光圈：上高光 / 下阴影 / 柔光散播 */
+  box-shadow:
+    0 4rpx 1rpx -2rpx rgba(255,255,255,0.95),
+    0 -4rpx 1rpx -2rpx rgba(0,0,0,0.2),
+    0 4rpx 40rpx 0 rgba(255,255,255,0.15);
+  transition: background 0.5s cubic-bezier(0.4,-0.3,0.6,1.3);
+  overflow: hidden;
+}
+
+.theme-toggle.is-light {
+  --dark: 1;
+  box-shadow:
+    0 4rpx 1rpx -2rpx rgba(255,255,255,0.5),
+    0 -4rpx 1rpx -2rpx rgba(0,0,0,0.1),
+    0 4rpx 40rpx 0 rgba(0,0,0,0.08);
+}
+
+/* 内凹边框 — 上方暗槽 + 下方深槽（在光圈后面） */
+.theme-toggle::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 76rpx;
+  z-index: 1;
+  pointer-events: none;
+  box-shadow:
+    0 -5rpx 5rpx 0 rgba(0,0,0,0.15) inset,
+    0 5rpx 5rpx 0 rgba(0,0,0,0.65) inset;
+}
+
+/* 太阳/月亮圈（容器 + 滑动） */
+.toggle-circle {
+  position: absolute;
+  top: 8rpx;
+  left: 8rpx;
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 50%;
+  transition: transform 0.5s cubic-bezier(0.4,-0.3,0.6,1.3);
+  z-index: 5;
+}
+
+.theme-toggle.is-light .toggle-circle {
+  transform: translateX(124rpx);
+}
+
+/* 三层同心光圈（原版 radial-gradient 方式） */
+.toggle-circle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  height: 300%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  background:
+    radial-gradient(circle, rgba(255,255,255,0.25) 28%, transparent 30%),
+    radial-gradient(circle, rgba(255,255,255,0.25) 48%, transparent 50%),
+    radial-gradient(circle, rgba(255,255,255,0.25) 68%, transparent 70%);
+  transition: transform 0.5s cubic-bezier(0.4,-0.3,0.6,1.3);
+}
+
+/* 太阳本体 — 金色球形，仅内阴影不发光（光圈由 ::before 画） */
+.toggle-sun {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%;
+  background: hsl(47, 91%, 58%);
+  overflow: hidden;
+  box-shadow:
+    3rpx 3rpx 5rpx 0 rgba(255,255,255,0.9) inset,
+    -3rpx -3rpx 5rpx 0 rgba(0,0,0,0.35) inset;
+}
+
+/* 月亮本体 — 比太阳大一点点以便完全覆盖，仅内阴影 */
+.toggle-moon {
+  position: absolute;
+  top: -1%; left: -1%; right: -1%; bottom: -1%;
+  border-radius: 50%;
+  background: hsl(212, 13%, 82%);
+  transition: transform 0.5s ease-in-out;
+  transform: translateX(105%);
+  box-shadow:
+    3rpx 3rpx 5rpx 0 rgba(255,255,255,0.85) inset,
+    -3rpx -3rpx 5rpx 0 rgba(0,0,0,0.5) inset;
+}
+
+.theme-toggle.is-light .toggle-moon {
+  transform: translateX(0);
+}
+
+/* 陨石坑 */
+.moon-crater {
+  position: absolute;
+  background: hsl(221, 16%, 68%);
+  border-radius: 50%;
+  box-shadow:
+    0.5rpx 0.5rpx 1.5rpx 0 rgba(0,0,0,0.2) inset,
+    0 0.5rpx 1.5rpx 0 rgba(255,255,255,0.25);
+}
+
+.moon-crater:nth-child(1) { width: 10rpx; height: 10rpx; left: 38%; top: 14%; }
+.moon-crater:nth-child(2) { width: 12rpx; height: 12rpx; left: 58%; top: 54%; }
+.moon-crater:nth-child(3) { width: 18rpx; height: 18rpx; left: 18%; top: 36%; }
+
+/* 云朵 — 底部云层，夜间滑出（原版 translate 动画） */
+.toggle-clouds {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4,-0.3,0.6,1.3);
+  transform: translateY(calc(var(--dark) * 100%));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 云层 1：底层大圆 */
+.toggle-clouds::before {
+  content: '';
+  position: absolute;
+  bottom: 4rpx;
+  left: 10rpx;
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  box-shadow:
+    /* 左半部压低 */
+    26rpx 24rpx 0 14rpx rgba(255,255,255,0.88),
+    56rpx 20rpx 0 20rpx rgba(255,255,255,0.85),
+    90rpx 12rpx 0 16rpx rgba(255,255,255,0.9),
+    /* 右半部保持 */
+    120rpx -6rpx 0 12rpx rgba(255,255,255,0.83),
+    150rpx -10rpx 0 18rpx rgba(255,255,255,0.8),
+    180rpx -30rpx 0 10rpx rgba(255,255,255,0.85);
+}
+
+/* 云层 2：上层小圆 */
+.toggle-clouds::after {
+  content: '';
+  position: absolute;
+  bottom: 14rpx;
+  left: 24rpx;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  box-shadow:
+    /* 左半部压低 */
+    30rpx 16rpx 0 8rpx rgba(255,255,255,0.75),
+    64rpx 12rpx 0 12rpx rgba(255,255,255,0.7),
+    /* 右半部保持 */
+    100rpx -8rpx 0 6rpx rgba(255,255,255,0.72),
+    136rpx -10rpx 0 10rpx rgba(255,255,255,0.68),
+    168rpx -24rpx 0 7rpx rgba(255,255,255,0.65);
+}
+
+/* 星星层 */
+.toggle-stars {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  transition: opacity 0.5s ease;
+  opacity: var(--dark);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.stars-dot {
+  position: absolute;
+  width: 3rpx;
+  height: 3rpx;
+  border-radius: 50%;
+  background: #fff;
+  animation: star-twinkle 6s ease-in-out infinite;
+}
+
+@keyframes star-twinkle {
+  0%, 40%, 60%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(var(--peak, 2.5)); opacity: 0.8; }
+}
+
+/* ── 主题切换全屏过渡动画 ── */
+.theme-transition {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 999;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.transit-ball {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  margin-left: -50rpx;
+  margin-top: -50rpx;
+  transform-origin: 50% 900rpx;
+  box-shadow:
+    3rpx 3rpx 5rpx 0 rgba(255,255,255,0.9) inset,
+    -3rpx -3rpx 5rpx 0 rgba(0,0,0,0.35) inset;
+}
+
+.transit-ball.is-sun {
+  background:
+    radial-gradient(circle at 40% 40%, rgba(255,255,255,0.7) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, hsl(50, 100%, 70%) 0%, hsl(47, 91%, 55%) 30%, hsl(35, 80%, 45%) 70%, transparent 72%),
+    radial-gradient(circle at 50% 50%, hsl(47, 91%, 58%) 60%, transparent 62%);
+  box-shadow:
+    0 0 30rpx 10rpx rgba(233,203,80,0.5),
+    3rpx 3rpx 5rpx 0 rgba(255,255,255,0.9) inset,
+    -3rpx -3rpx 5rpx 0 rgba(0,0,0,0.25) inset;
+}
+
+.transit-ball.is-moon {
+  background:
+    radial-gradient(circle at 38% 38%, rgba(255,255,255,0.4) 0%, transparent 35%),
+    radial-gradient(circle at 55% 60%, rgba(0,0,0,0.06) 0%, transparent 40%),
+    radial-gradient(circle at 40% 22%, hsl(221, 16%, 65%) 0, hsl(221, 16%, 65%) 12rpx, transparent 13rpx),
+    radial-gradient(circle at 62% 48%, hsl(221, 16%, 65%) 0, hsl(221, 16%, 65%) 9rpx, transparent 10rpx),
+    radial-gradient(circle at 28% 52%, hsl(221, 16%, 65%) 0, hsl(221, 16%, 65%) 16rpx, transparent 17rpx),
+    radial-gradient(circle at 50% 50%, hsl(215, 15%, 88%) 0%, hsl(215, 15%, 78%) 60%, hsl(215, 15%, 68%) 100%);
+  box-shadow:
+    0 0 20rpx 8rpx rgba(200,205,215,0.5),
+    3rpx 3rpx 5rpx 0 rgba(255,255,255,0.85) inset,
+    -3rpx -3rpx 5rpx 0 rgba(0,0,0,0.35) inset;
+}
+
+.theme-transition.active .transit-out {
+  animation: transit-rise 1.9s linear forwards;
+}
+
+.theme-transition.active .transit-in {
+  animation: transit-fall 1.9s linear forwards;
+}
+
+@keyframes transit-rise {
+  0% {
+    transform: rotate(-30deg);
+    opacity: 0;
+  }
+  32% {
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+  74% {
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+  90% {
+    transform: rotate(0deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(0deg);
+    opacity: 0;
+  }
+}
+
+@keyframes transit-fall {
+  0% {
+    transform: rotate(0deg);
+    opacity: 1;
+  }
+  32% {
+    transform: rotate(30deg);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(30deg);
+    opacity: 0;
+  }
 }

@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container theme-{{theme}}">
 
   <!-- 状态: 加载中 -->
   <view class="center-box" wx:if="{{status === 'loading'}}">
@@ -49,12 +49,13 @@
     <input class="input-code" placeholder="输入通行码名称" value="{{codeName}}" bindinput="onCodeInput" maxlength="50"/>
     <button class="btn-primary" bindtap="submitCode" disabled="{{!codeName}}">验证通行码</button>
     <text class="error-msg" wx:if="{{errorMsg}}">{{errorMsg}}</text>
+    <text class="contact-link" bindtap="goContact">直接找国哥买</text>
   </view>
 
   <!-- 状态: 选择人数 -->
   <view class="center-box" wx:elif="{{status === 'choosePeople'}}">
     <view class="icon-lg">👥</view>
-    <text class="title">选择入场人数</text>
+    <text class="title">选择 <text class="pool-highlight">{{passcodeCategory}}</text> 入场人数</text>
     <text class="hint">请选择本次需要入场的人数</text>
     <view class="count-row">
       <view class="count-chip {{peopleCount===item?'active':''}}" wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" bindtap="selectCount" data-count="{{item}}">{{item}}</view>
@@ -69,13 +70,12 @@
   <!-- 状态: 展示收款码 -->
   <view class="center-box" wx:elif="{{status === 'showQR'}}">
     <text class="guide" wx:for="{{guideLines}}" wx:key="index">{{item}}</text>
-    <image class="qr-img" src="{{qrUrl}}" mode="widthFix" show-menu-by-longpress="{{true}}" bindtap="previewQR" wx:if="{{qrUrl}}"/>
+    <image class="qr-img" src="{{qrUrl}}" mode="widthFix" show-menu-by-longpress="{{true}}" wx:if="{{qrUrl}}"/>
     <view class="qr-placeholder" wx:else>
       <text>收款码尚未上传</text>
     </view>
-    <button class="btn-save" bindtap="saveQR">保存收款码到相册</button>
-    <button class="btn-primary" bindtap="confirmPayment">我已付款 {{totalPrice}} 元</button>
-    <text class="hint hint-pay">保存收款码到相册 -> 打开微信扫一扫 -> 相册 -> 选择图片 -> 支付</text>
+    <text class="hint hint-pay">先转账，再使用，合作愉快</text>
+    <button class="btn-primary" bindtap="confirmPayment" wx:if="{{showPayButton}}">我已付款 {{totalPrice}} 元</button>
   </view>
 
   <!-- 状态: 展示账号密码 -->
@@ -93,6 +93,44 @@
     </view>
     <button class="btn-secondary" bindtap="refreshCredentials">刷新账号</button>
     <text class="hint">如密码失效，请点刷新获取最新</text>
+  </view>
+
+  <!-- 切换泳池浮动按钮 -->
+  <view class="switch-pool-btn" wx:if="{{status === 'choosePeople' && passcodes.length > 1}}" bindtap="onSwitchPool">
+    <text class="switch-icon">⇄</text>
+  </view>
+
+  <!-- 绑定其他通行码按钮(左下) -->
+  <view class="bind-pool-btn" wx:if="{{status === 'choosePeople'}}" bindtap="onToggleBindInput">
+    <text class="bind-icon-text">绑定通行码</text>
+  </view>
+
+  <!-- 选择泳池底部弹窗 -->
+  <view class="sheet-overlay" wx:if="{{showPoolPicker}}" bindtap="closePoolPicker">
+    <view class="sheet-card" catchtap="noop">
+      <text class="sheet-title">选择泳池</text>
+      <view class="pool-item {{item.id === selectedPasscodeId ? 'active' : ''}} {{!item.valid ? 'invalid' : ''}}"
+            wx:for="{{passcodes}}" wx:key="id"
+            bindtap="onSelectPool" data-id="{{item.id}}">
+        <view class="pool-info">
+          <text class="pool-name">{{item.category}}</text>
+          <text class="pool-price">单价 ¥{{item.unitPrice}}</text>
+          <text class="pool-badge-invalid" wx:if="{{!item.valid}}">已失效</text>
+        </view>
+        <view class="pool-check" wx:if="{{item.id === selectedPasscodeId}}">✓</view>
+      </view>
+      <button class="btn-sheet-close" bindtap="closePoolPicker">关闭</button>
+    </view>
+  </view>
+
+  <!-- 绑定其他通行码弹窗(居中) -->
+  <view class="modal-overlay" wx:if="{{showBindDialog}}" bindtap="closeBindDialog">
+    <view class="modal-card" catchtap="noop">
+      <text class="modal-title">绑定通行码</text>
+      <input class="input-code" placeholder="输入通行码名称" value="{{newBindCodeName}}" bindinput="onBindCodeInput" maxlength="50" focus/>
+      <button class="btn-primary" bindtap="doBindAnother" disabled="{{!newBindCodeName}}" style="margin-top:24rpx">确认绑定</button>
+      <button class="btn-sheet-close" bindtap="closeBindDialog">取消</button>
+    </view>
   </view>
 
 </view>

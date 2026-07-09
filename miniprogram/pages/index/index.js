@@ -12,10 +12,51 @@ Page({
     dots: [],
     passcodeStatusText: '',
     passcodeStatusColor: '#52525b',
-    inactiveDays: 0
+    inactiveDays: 0,
+    swimEnabled: true,
+    theme: 'dark',
+    starDots: [],
+    themeTransing: false
+  },
+
+  onLoad() {
+    const theme = wx.getStorageSync('theme') || 'dark'
+    if (this.data.theme !== theme) this.setData({ theme })
+    wx.setNavigationBarColor({
+      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
+      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
+    })
+    this.genStarDots()
+  },
+
+  genStarDots() {
+    let dots = []
+    while (true) {
+      dots = []
+      for (let i = 0; i < 12; i++) {
+        dots.push({
+          left: Math.random() * 90,
+          top: 5 + Math.random() * 70,
+          delay: (Math.random() * 3).toFixed(1),
+          peak: (1.5 + Math.random() * 2).toFixed(1)
+        })
+      }
+      const leftCount = dots.filter(d => d.left < 50).length
+      if (leftCount >= 7) break
+    }
+    this.setData({ starDots: dots })
   },
 
   async onShow() {
+    // 同步主题
+    const theme = wx.getStorageSync('theme') || 'dark'
+    if (this.data.theme !== theme) {
+      this.setData({ theme })
+    }
+    wx.setNavigationBarColor({
+      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
+      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
+    })
     const u = app.globalData
     this.setData({
       avatar: u.avatar || '',
@@ -44,22 +85,42 @@ Page({
     }
     this.loadPasscodeStatus()
     this.loadInactiveStatus()
+    this.loadSwimSettings()
   },
 
   async loadPasscodeStatus() {
     if (!app.globalData.openid) return
     try {
       const res = await api.getUserPasscodeStatus(app.globalData.openid)
-      if (!res.hasPasscode) {
+      if (!res.hasPasscode || !res.passcodes || res.passcodes.length === 0) {
+        wx.removeStorageSync('selectedPasscodeId')
         this.setData({ passcodeStatusText: '未获得通行码', passcodeStatusColor: '#52525b' })
-      } else if (res.show) {
-        const active = res.status === 'active'
-        this.setData({
-          passcodeStatusText: res.passcodeName + ' · ' + (active ? '生效中' : '已删除'),
-          passcodeStatusColor: active ? '#34d399' : '#f87171'
-        })
       } else {
-        this.setData({ passcodeStatusText: '', passcodeStatusColor: '#52525b' })
+        const savedId = wx.getStorageSync('selectedPasscodeId')
+        let selected = savedId ? res.passcodes.find(p => p.id === savedId) : null
+        // 如果缓存指向已删除的通行证，清除并切换到第一个
+        if (selected && selected.status === 'deleted') {
+          wx.removeStorageSync('selectedPasscodeId')
+          selected = res.passcodes.find(p => p.status !== 'deleted') || selected
+        }
+        if (!selected) selected = res.passcodes[0]
+        const label = selected.category || selected.name || '未知'
+        if (selected.status === 'active') {
+          this.setData({
+            passcodeStatusText: label + ' · 生效中',
+            passcodeStatusColor: '#34d399'
+          })
+        } else if (selected.status === 'deleted') {
+          this.setData({
+            passcodeStatusText: label + ' · 已删除',
+            passcodeStatusColor: '#f87171'
+          })
+        } else {
+          this.setData({
+            passcodeStatusText: label + ' · 已过期',
+            passcodeStatusColor: '#f87171'
+          })
+        }
       }
     } catch {
       this.setData({ passcodeStatusText: '' })
@@ -83,7 +144,18 @@ Page({
   },
 
   goSwim() {
+    if (!this.data.swimEnabled) {
+      wx.showToast({ title: '系统维护中，请直接联系国哥', icon: 'none', duration: 2500 })
+      return
+    }
     wx.navigateTo({ url: '/pages/swim/swim' })
+  },
+
+  async loadSwimSettings() {
+    try {
+      const res = await api.getSwimSettings()
+      this.setData({ swimEnabled: res.swimEnabled !== false })
+    } catch {}
   },
 
   goLeaderboard() {
@@ -100,6 +172,28 @@ Page({
       return
     }
     wx.navigateTo({ url: '/pages/mine/mine' })
+  },
+
+  onToggleTheme() {
+    if (this.data.themeTransing) return
+    const next = this.data.theme === 'dark' ? 'light' : 'dark'
+    this.setData({ theme: next, themeTransing: true })
+    wx.setStorageSync('theme', next)
+    app.globalData.theme = next
+    setTimeout(() => this.setData({ themeTransing: false }), 1900)
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '得闲意 — 行到水穷处，坐看云起时',
+      path: '/pages/index/index'
+    }
+  },
+
+  onShareTimeline() {
+    return {
+      title: '得闲意 — 行到水穷处，坐看云起时'
+    }
   },
 
   async loadInactiveStatus() {

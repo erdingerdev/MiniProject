@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container theme-{{theme}}">
 
   <!-- === 密码校验 === -->
   <view class="center-box" wx:if="{{!authed}}">
@@ -22,6 +22,16 @@
 
     <!-- ====== 配置 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='config'}}">
+      <!-- 开放开关 -->
+      <view class="section">
+        <text class="section-title">获取游泳票入口</text>
+        <view class="switch-row">
+          <text class="switch-label">{{swimEnabled ? '已开放' : '维护中'}}</text>
+          <switch checked="{{swimEnabled}}" bindchange="toggleSwimEnabled" color="#22d3ee"/>
+        </view>
+        <text class="switch-hint" wx:if="{{!swimEnabled}}">关闭后用户点击获取游泳票将提示系统维护中</text>
+      </view>
+
       <!-- 收款码 -->
       <view class="section">
         <text class="section-title">收款码</text>
@@ -37,21 +47,6 @@
         <button class="btn-sm" bindtap="saveGuideText">保存引导文案</button>
       </view>
 
-      <!-- 单价 -->
-      <view class="section">
-        <text class="section-title">入场单价（元）</text>
-        <input class="field" type="digit" placeholder="单价" value="{{unitPrice}}" bindinput="onUnitPrice"/>
-        <button class="btn-sm" bindtap="saveUnitPrice">保存单价</button>
-      </view>
-
-      <!-- 游泳账号 -->
-      <view class="section">
-        <text class="section-title">游泳账号密码</text>
-        <input class="field" placeholder="账号" value="{{swimUser}}" bindinput="onSwimUser"/>
-        <input class="field" placeholder="密码" value="{{swimPwd}}" bindinput="onSwimPwd"/>
-        <button class="btn-sm" bindtap="saveSwimConfig">保存账号信息</button>
-      </view>
-
       <!-- 管理密码 -->
       <view class="section">
         <text class="section-title">修改管理密码</text>
@@ -62,6 +57,20 @@
 
     <!-- ====== 通行码 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='passcodes'}}">
+      <!-- 分类管理 -->
+      <view class="section">
+        <text class="section-title">分类管理</text>
+        <view class="cat-item" wx:for="{{categories}}" wx:key="*this" bindtap="onEditCategory" data-cat="{{item}}">
+          <view class="cat-item-body">
+            <text class="cat-item-name">{{item}}</text>
+            <text class="cat-item-creds">账号: {{categoryCreds[item].username || '未设置'}} · 密码: {{categoryCreds[item].password || '未设置'}} · ¥{{categoryCreds[item].unitPrice || '22.98'}}</text>
+          </view>
+          <text class="cat-item-arrow">›</text>
+        </view>
+        <view class="empty" wx:if="{{categories.length===0}}">暂无分类</view>
+        <button class="btn-sm" bindtap="onAddCategory" style="margin-top:16rpx">新增类型</button>
+      </view>
+
       <!-- 新增 -->
       <view class="section">
         <text class="section-title">新增通行码</text>
@@ -76,27 +85,46 @@
           <view class="picker-text">{{newCodeExpire || '过期时间(留空=永久)'}}</view>
         </picker>
         <text class="field-tip" wx:if="{{newCodeExpire}}" bindtap="clearExpire">点击清除过期时间</text>
+        <!-- 分类选择 -->
+        <scroll-view class="cat-scroll" scroll-x enable-flex>
+          <view class="cat-chip {{newCodeCategory===item?'active':''}}" wx:for="{{categories}}" wx:key="*this" bindtap="selectCategory" data-cat="{{item}}">{{item}}</view>
+        </scroll-view>
         <button class="btn-sm" bindtap="doCreateCode" disabled="{{!newCodeName}}">创建通行码</button>
       </view>
 
       <!-- 列表 -->
       <view class="section">
-        <text class="section-title">通行码列表 ({{passcodes.length}})</text>
-        <view class="code-item" wx:for="{{passcodes}}" wx:key="id">
+        <text class="section-title">通行码列表</text>
+        <!-- 分类筛选 -->
+        <scroll-view class="cat-scroll" scroll-x enable-flex style="margin-bottom:20rpx">
+          <view class="cat-chip {{codeFilterCategory==='全部'?'active':''}}" bindtap="onFilterCodeCategory" data-cat="全部">全部</view>
+          <view class="cat-chip {{codeFilterCategory===item?'active':''}}" wx:for="{{categories}}" wx:key="*this" bindtap="onFilterCodeCategory" data-cat="{{item}}">{{item}}</view>
+        </scroll-view>
+        <view class="code-item" wx:for="{{passcodes}}" wx:key="id" wx:if="{{codeFilterCategory==='全部' || item.category===codeFilterCategory}}">
           <view class="code-info" bindtap="toggleCodeDetail" data-id="{{item.id}}">
-            <text class="code-name">{{item.name}}</text>
-            <text class="code-meta">{{item.type==='disposable'?'一次性':item.type==='shared'?'多人':'单人'}} · 已用{{item.usageCount}}{{item.maxUses>0?'/'+item.maxUses:''}}次{{item.expireAt?' · '+item.expireAt+' 到期':' · 永久'}} · {{item.createdAt}} 创建</text>
+            <view class="code-name-row">
+              <text class="code-name">{{item.name}}</text>
+              <text class="code-copy" catchtap="onCopyCodeName" data-name="{{item.name}}">复制</text>
+            </view>
+            <text class="code-meta">{{item.category||'swim'}} · {{item.type==='disposable'?'一次性':item.type==='shared'?'多人':'单人'}} · ¥{{item.unitPrice}} · 已用{{item.usageCount}}{{item.maxUses>0?'/'+item.maxUses:''}}次{{item.expireAt?' · '+item.expireAt+' 到期':' · 永久'}} · {{item.createdAt}} 创建</text>
           </view>
           <view class="code-del" bindtap="doDeleteCode" data-id="{{item.id}}" data-name="{{item.name}}">×</view>
 
           <!-- 展开详情 -->
           <view class="code-detail" wx:if="{{expandedId===item.id}}">
-            <view class="detail-row" wx:for="{{codeDetail.boundUsers}}" wx:key="openid" wx:for-item="u">
-              <image class="u-avatar" src="{{u.avatar}}" mode="aspectFill" wx:if="{{u.avatar}}"/>
-          <view class="u-avatar u-avatar-empty" wx:else></view>
-              <view class="u-info">
-                <text class="u-name">{{u.nickname||'匿名'}}</text>
-                <text class="u-stats">总{{u.totalCount}}人次 · 近7天{{u.recent7Days}}人次 · 最近{{u.lastUsed||'无'}}</text>
+            <view class="detail-row-wrap" wx:for="{{codeDetail.boundUsers}}" wx:key="openid" wx:for-item="u">
+              <view class="detail-row-delete" bindtap="onRemoveUser" data-openid="{{u.openid}}">移除</view>
+              <view class="detail-row {{swipedUserId===u.openid?'swiped':''}}"
+                    bindtouchstart="onDetailRowTouchStart"
+                    bindtouchmove="onDetailRowTouchMove"
+                    bindtouchend="onDetailRowTouchEnd"
+                    data-openid="{{u.openid}}">
+                <image class="u-avatar" src="{{u.avatar}}" mode="aspectFill" wx:if="{{u.avatar}}"/>
+                <view class="u-avatar u-avatar-empty" wx:else></view>
+                <view class="u-info">
+                  <text class="u-name">{{u.nickname||'匿名'}}</text>
+                  <text class="u-stats">总{{u.totalCount}}人次 · 近7天{{u.recent7Days}}人次 · 最近{{u.lastUsed||'无'}}</text>
+                </view>
               </view>
             </view>
             <view class="detail-empty" wx:if="{{!codeDetail.boundUsers || codeDetail.boundUsers.length===0}}">

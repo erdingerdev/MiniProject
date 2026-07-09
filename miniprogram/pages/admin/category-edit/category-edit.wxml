@@ -1,0 +1,18 @@
+<view class="container theme-{{theme}}">
+  <view class="form">
+    <text class="label">分类名称</text>
+    <input class="input" placeholder="输入分类名称" value="{{categoryName}}" bindinput="onNameInput" maxlength="20"/>
+
+    <text class="label" style="margin-top:32rpx">账号</text>
+    <input class="input" placeholder="输入账号" value="{{username}}" bindinput="onUserInput" maxlength="50"/>
+
+    <text class="label" style="margin-top:32rpx">密码</text>
+    <input class="input" placeholder="输入密码" value="{{password}}" bindinput="onPwdInput" maxlength="50"/>
+
+    <text class="label" style="margin-top:32rpx">单价 (元)</text>
+    <input class="input" type="digit" placeholder="输入单价" value="{{unitPrice}}" bindinput="onPriceInput"/>
+
+    <button class="btn-save" bindtap="doSave">{{isAdd ? '创建' : '保存'}}</button>
+    <button class="btn-delete" bindtap="doDelete" wx:if="{{!isAdd}}">删除此分类</button>
+  </view>
+</view>

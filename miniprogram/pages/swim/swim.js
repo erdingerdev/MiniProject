@@ -9,35 +9,56 @@ Page({
     qrUrl: '',
     passcodeId: '',
     passcodeName: '',
+    passcodeCategory: '',
     credentials: { username: '', password: '' },
     tempAvatar: '',
     tempNickname: '',
     guideLines: [],
     peopleCount: 1,
     unitPrice: '22.98',
-    totalPrice: '22.98'
+    totalPrice: '22.98',
+    showPayButton: false,
+    passcodes: [],
+    selectedPasscodeId: '',
+    showPoolPicker: false,
+    showBindDialog: false,
+    theme: 'dark',
+    newBindCodeName: ''
   },
 
   onLoad(options) {
+    const theme = wx.getStorageSync('theme') || 'dark'
+    if (this.data.theme !== theme) this.setData({ theme })
+    wx.setNavigationBarColor({
+      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
+      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
+    })
     this._from = options.from || ''
   },
 
   async onShow() {
+    const theme = wx.getStorageSync('theme') || 'dark'
+    if (this.data.theme !== theme) this.setData({ theme })
+    wx.setNavigationBarColor({
+      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
+      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
+    })
     if (['loading', 'needLogin', 'needPasscode'].includes(this.data.status)) {
       await this.initFlow()
+    }
+    if (this.data.status === 'showQR' && !this.data.showPayButton) {
+      this.setData({ showPayButton: true })
     }
   },
 
   async initFlow() {
     if (!app.globalData.openid) {
-      // 静默自动登录：如果用户之前授权过，自动拿 openid
       const stored = wx.getStorageSync('userInfo')
       if (stored && stored.nickname) {
         try {
           await app.doLogin()
           app.globalData.nickname = stored.nickname
           app.globalData.avatar = stored.avatar || ''
-          // 有昵称但没头像，强制进入设置资料页
           if (!app.globalData.avatar || app.globalData.avatar.startsWith('wxfile://') || app.globalData.avatar.startsWith('http://tmp/')) {
             this.setData({
               tempAvatar: '',
@@ -57,8 +78,28 @@ Page({
     }
     try {
       const st = await api.getBindStatus(app.globalData.openid)
-      if (st.bound) {
-        this.setData({ passcodeId: st.passcodeId, passcodeName: st.passcodeName, status: 'choosePeople' })
+      if (st.bound && st.passcodes && st.passcodes.length > 0) {
+        // 筛选有效通行证
+        const validPasscodes = st.passcodes.filter(p => p.valid)
+        if (validPasscodes.length === 0) {
+          this.setData({ status: 'needPasscode', passcodes: st.passcodes })
+          return
+        }
+        // 优先恢复上次选中的通行证
+        const savedId = wx.getStorageSync('selectedPasscodeId')
+        let selected = validPasscodes.find(p => p.id === savedId) || validPasscodes[0]
+        const price = String(selected.unitPrice)
+        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
+        this.setData({
+          passcodes: st.passcodes,
+          selectedPasscodeId: selected.id,
+          passcodeId: selected.id,
+          passcodeName: selected.name,
+          passcodeCategory: selected.category,
+          unitPrice: price,
+          totalPrice: total,
+          status: 'choosePeople'
+        })
         this.loadConfig()
       } else {
         this.setData({ status: 'needPasscode' })
@@ -75,7 +116,6 @@ Page({
       await app.doLogin()
       wx.hideLoading()
 
-      // 先看是否有历史头像（从 storage 恢复的）
       const stored = wx.getStorageSync('userInfo') || {}
       this.setData({
         tempAvatar: app.globalData.avatar || stored.avatar || '',
@@ -93,7 +133,7 @@ Page({
     this.setData({ tempAvatar: e.detail.avatarUrl })
   },
 
-  // ── 昵称输入（type=nickname 会自动填入微信昵称） ──
+  // ── 昵称输入 ──
   onNicknameInput(e) {
     this.setData({ tempNickname: e.detail.value })
   },
@@ -117,12 +157,10 @@ Page({
       return
     }
 
-    // 上传头像到服务器获取永久 URL
     let avatarUrl = avatarPath
     if (avatarPath.startsWith('wxfile://') || avatarPath.startsWith('http://tmp/')) {
       wx.showLoading({ title: '上传头像...' })
       try {
-        // 压缩图片：限制 400px 宽 + 60% 质量
         let uploadPath = avatarPath
         try {
           const compressRes = await new Promise(function (resolve, reject) {
@@ -145,12 +183,10 @@ Page({
 
     wx.setStorageSync('userInfo', { nickname, avatar: avatarUrl })
 
-    // 同步头像到服务器
     if (avatarUrl && !avatarUrl.startsWith('wxfile://') && !avatarUrl.startsWith('http://tmp/')) {
       api.updateProfile(app.globalData.openid, nickname, avatarUrl).catch(() => {})
     }
 
-    // 从 mine 页过来的，完成资料后返回
     if (this._from === 'mine') {
       wx.redirectTo({ url: '/pages/mine/mine' })
       return
@@ -158,8 +194,26 @@ Page({
 
     try {
       const st = await api.getBindStatus(app.globalData.openid)
-      if (st.bound) {
-        this.setData({ passcodeId: st.passcodeId, passcodeName: st.passcodeName, status: 'choosePeople' })
+      if (st.bound && st.passcodes && st.passcodes.length > 0) {
+        const validPasscodes = st.passcodes.filter(p => p.valid)
+        if (validPasscodes.length === 0) {
+          this.setData({ status: 'needPasscode', passcodes: st.passcodes })
+          return
+        }
+        const savedId = wx.getStorageSync('selectedPasscodeId')
+        const selected = validPasscodes.find(p => p.id === savedId) || validPasscodes[0]
+        const price = String(selected.unitPrice)
+        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
+        this.setData({
+          passcodes: st.passcodes,
+          selectedPasscodeId: selected.id,
+          passcodeId: selected.id,
+          passcodeName: selected.name,
+          passcodeCategory: selected.category,
+          unitPrice: price,
+          totalPrice: total,
+          status: 'choosePeople'
+        })
         this.loadConfig()
         return
       }
@@ -181,17 +235,40 @@ Page({
         codeName, app.globalData.openid, app.globalData.nickname, app.globalData.avatar
       )
       wx.hideLoading()
-      this.setData({
-        passcodeId: res.passcodeId, passcodeName: res.passcodeName,
-        status: 'choosePeople', codeName: '', errorMsg: ''
-      })
-      this.loadConfig()
+      // 从响应中获取所有 passcodes
+      if (res.passcodes && res.passcodes.length > 0) {
+        const validPasscodes = res.passcodes.filter(p => p.valid)
+        const selected = validPasscodes.length > 0 ? validPasscodes[0] : res.passcodes[0]
+        const price = String(selected.unitPrice)
+        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
+        wx.setStorageSync('selectedPasscodeId', selected.id)
+        this.setData({
+          passcodes: res.passcodes,
+          selectedPasscodeId: selected.id,
+          passcodeId: selected.id,
+          passcodeName: selected.name,
+          passcodeCategory: selected.category,
+          unitPrice: price,
+          totalPrice: total,
+          status: 'choosePeople',
+          codeName: '',
+          errorMsg: ''
+        })
+        this.loadConfig()
+      } else {
+        this.setData({
+          passcodeId: res.passcodeId, passcodeName: res.passcodeName, passcodeCategory: res.passcodeCategory,
+          status: 'choosePeople', codeName: '', errorMsg: ''
+        })
+        this.loadConfig()
+      }
     } catch (e) {
       wx.hideLoading()
       this.setData({ errorMsg: e.error || '验证失败' })
     }
   },
 
+  // ── 选择人数 ──
   selectCount(e) {
     const count = e.currentTarget.dataset.count
     const total = (count * parseFloat(this.data.unitPrice)).toFixed(2)
@@ -199,9 +276,10 @@ Page({
   },
 
   confirmPeople() {
-    this.setData({ status: 'showQR' })
+    this.setData({ status: 'showQR', showPayButton: false })
   },
 
+  // ── 加载全局配置(收款码/引导文案) ──
   async loadConfig() {
     try {
       const cfg = await api.getAdminConfig()
@@ -211,57 +289,52 @@ Page({
       if (cfg.guideText) {
         this.setData({ guideLines: cfg.guideText.split('\n') })
       }
-      if (cfg.unitPrice != null) {
-        const price = String(cfg.unitPrice)
-        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
-        this.setData({ unitPrice: price, totalPrice: total })
-      }
     } catch {}
   },
 
-  previewQR() {
-    wx.previewImage({
-      urls: [this.data.qrUrl],
-      current: this.data.qrUrl,
-      showmenu: true
+  // ── 切换泳池 ──
+  onSwitchPool() {
+    this.setData({ showPoolPicker: true })
+  },
+
+  closePoolPicker() {
+    this.setData({ showPoolPicker: false })
+  },
+
+  onSelectPool(e) {
+    const id = e.currentTarget.dataset.id
+    const passcode = this.data.passcodes.find(p => p.id === id)
+    if (!passcode) return
+    if (!passcode.valid) {
+      wx.showToast({ title: '该通行码已失效', icon: 'none' })
+      return
+    }
+    const price = String(passcode.unitPrice)
+    const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
+    wx.setStorageSync('selectedPasscodeId', passcode.id)
+    this.setData({
+      selectedPasscodeId: passcode.id,
+      passcodeId: passcode.id,
+      passcodeName: passcode.name,
+      passcodeCategory: passcode.category,
+      unitPrice: price,
+      totalPrice: total,
+      showPoolPicker: false
     })
   },
 
-  saveQR() {
-    wx.showLoading({ title: '保存中...' })
-    wx.downloadFile({
-      url: this.data.qrUrl,
-      success: (res) => {
-        wx.saveImageToPhotosAlbum({
-          filePath: res.tempFilePath,
-          success: () => {
-            wx.hideLoading()
-            wx.showToast({ title: '已保存到相册', icon: 'success' })
-          },
-          fail: () => {
-            wx.hideLoading()
-            wx.showToast({ title: '保存失败，请重试', icon: 'none' })
-          }
-        })
-      },
-      fail: () => {
-        wx.hideLoading()
-        wx.showToast({ title: '下载失败，请重试', icon: 'none' })
-      }
-    })
-  },
-
+  // ── 付款确认 ──
   async confirmPayment() {
     wx.showLoading({ title: '请稍候...' })
     try {
       await api.confirmPayment(app.globalData.openid, this.data.passcodeId, this.data.passcodeName, this.data.peopleCount)
-      const cred = await api.getCredentials()
+      const cred = await api.getCredentials(this.data.selectedPasscodeId, app.globalData.openid)
       wx.hideLoading()
       this.setData({ status: 'showCredentials', credentials: cred })
     } catch {
       wx.hideLoading()
       try {
-        const cred = await api.getCredentials()
+        const cred = await api.getCredentials(this.data.selectedPasscodeId, app.globalData.openid)
         this.setData({ status: 'showCredentials', credentials: cred })
       } catch {
         wx.showToast({ title: '获取失败，请重试', icon: 'none' })
@@ -269,10 +342,11 @@ Page({
     }
   },
 
+  // ── 刷新账号密码 ──
   async refreshCredentials() {
     wx.showLoading({ title: '刷新中...' })
     try {
-      const cred = await api.getCredentials()
+      const cred = await api.getCredentials(this.data.selectedPasscodeId, app.globalData.openid)
       wx.hideLoading()
       this.setData({ credentials: cred })
       wx.showToast({ title: '已更新', icon: 'success' })
@@ -280,5 +354,56 @@ Page({
       wx.hideLoading()
       wx.showToast({ title: '刷新失败', icon: 'none' })
     }
+  },
+
+  // ── 绑定其他通行码弹窗 ──
+  onToggleBindInput() {
+    this.setData({ showBindDialog: true, newBindCodeName: '' })
+  },
+
+  closeBindDialog() {
+    this.setData({ showBindDialog: false, newBindCodeName: '' })
+  },
+
+  onBindCodeInput(e) {
+    this.setData({ newBindCodeName: e.detail.value })
+  },
+
+  async doBindAnother() {
+    const name = this.data.newBindCodeName.trim()
+    if (!name) return
+    wx.showLoading({ title: '验证中...' })
+    try {
+      const res = await api.bindPasscode(
+        name, app.globalData.openid, app.globalData.nickname, app.globalData.avatar
+      )
+      wx.hideLoading()
+      if (res.passcodes && res.passcodes.length > 0) {
+        const validPasscodes = res.passcodes.filter(p => p.valid)
+        const selected = validPasscodes.length > 0 ? validPasscodes[0] : res.passcodes[0]
+        const price = String(selected.unitPrice)
+        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
+        wx.setStorageSync('selectedPasscodeId', selected.id)
+        this.setData({
+          passcodes: res.passcodes,
+          selectedPasscodeId: selected.id,
+          passcodeId: selected.id,
+          passcodeName: selected.name,
+          passcodeCategory: selected.category,
+          unitPrice: price,
+          totalPrice: total,
+          showBindDialog: false,
+          newBindCodeName: ''
+        })
+        wx.showToast({ title: '绑定成功', icon: 'success' })
+      }
+    } catch (e) {
+      wx.hideLoading()
+      wx.showToast({ title: e.error || '绑定失败', icon: 'none' })
+    }
+  },
+
+  goContact() {
+    wx.navigateTo({ url: '/pages/contact/contact' })
   }
 })

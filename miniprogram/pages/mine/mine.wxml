@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container theme-{{theme}}">
   <!-- 弹窗 (里程碑 / 冷知识 / 已打卡) -->
   <view class="milestone-overlay" wx:if="{{showPopup}}" bindtap="closePopup">
     <view class="milestone-card" catchtap="noop">

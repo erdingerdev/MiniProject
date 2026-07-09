@@ -1,0 +1,55 @@
+.container {
+  min-height: 100vh;
+  background: var(--bg-gradient, var(--bg));
+  display: flex;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.center-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600rpx;
+  padding-top: 120rpx;
+}
+
+.guide {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 8rpx;
+  line-height: 1.6;
+  display: block;
+}
+
+.guide-sub {
+  font-size: 26rpx;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 48rpx;
+  display: block;
+}
+
+.qr-img {
+  width: 400rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid var(--border2);
+}
+
+.qr-placeholder {
+  width: 400rpx;
+  height: 400rpx;
+  background: var(--bg-card2);
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim2);
+  font-size: 26rpx;
+}
+
+.theme-light .guide { color: rgba(255,255,255,0.9); }
+.theme-light .guide-sub { color: rgba(255,255,255,0.7); }

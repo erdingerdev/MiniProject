@@ -1,4 +1,4 @@
-<view class="container">
+<view class="container theme-{{theme}}">
   <view class="header">
     <text class="header-title">使用次数排行榜</text>
   </view>

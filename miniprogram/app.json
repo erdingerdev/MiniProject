@@ -3,8 +3,10 @@
     "pages/index/index",
     "pages/swim/swim",
     "pages/admin/admin",
+    "pages/admin/category-edit/category-edit",
     "pages/leaderboard/leaderboard",
-    "pages/mine/mine"
+    "pages/mine/mine",
+    "pages/contact/contact"
   ],
   "lazyCodeLoading": "requiredComponents",
   "window": {

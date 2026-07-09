@@ -57,6 +57,7 @@ Page({
     todayChecked: false,
     makeupLoading: false,
     checkinDates: [],
+    theme: 'dark',
     totalCount: 0,
     monthlyCount: 0,
     maxStreak: 0,
@@ -73,7 +74,22 @@ Page({
     popupText: '',
   },
 
+  onLoad() {
+    const theme = wx.getStorageSync('theme') || 'dark'
+    if (this.data.theme !== theme) this.setData({ theme })
+    wx.setNavigationBarColor({
+      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
+      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
+    })
+  },
+
   onShow() {
+    const theme = wx.getStorageSync('theme') || 'dark'
+    if (this.data.theme !== theme) this.setData({ theme })
+    wx.setNavigationBarColor({
+      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
+      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
+    })
     if (!this.data.year) {
       const now = new Date()
       this.setData({ year: now.getFullYear(), month: now.getMonth() + 1 })

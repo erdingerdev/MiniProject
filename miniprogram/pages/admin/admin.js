@@ -12,19 +12,23 @@ Page({
     // 配置
     qrPreview: '',
     guideText: '',
-    unitPrice: '22.98',
-    swimUser: '',
-    swimPwd: '',
     newAdminPwd: '',
+    swimEnabled: true,
+    theme: 'dark',
 
     // 通行码
     passcodes: [],
+    categories: ['swim'],
+    categoryCreds: {},
+    newCodeCategory: 'swim',
     newCodeName: '',
     newCodeType: 'shared',
     newCodeMax: '',
     newCodeExpire: '',
+    codeFilterCategory: '全部',
     expandedId: '',
     codeDetail: { boundUsers: [] },
+    swipedUserId: '',
 
     // 用户
     users: [],
@@ -37,6 +41,19 @@ Page({
     const saved = wx.getStorageSync('adminPwd')
     if (saved) {
       this.setData({ adminPwd: saved })
+    }
+  },
+
+  onShow() {
+    const theme = wx.getStorageSync('theme') || 'dark'
+    if (this.data.theme !== theme) this.setData({ theme })
+    wx.setNavigationBarColor({
+      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
+      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
+    })
+    if (this.data.authed) {
+      this.loadConfig()
+      this.loadPasscodes()
     }
   },
 
@@ -82,43 +99,42 @@ Page({
   async loadConfig() {
     try {
       const cfg = await api.getAdminConfig()
+      // 缓存分类账号密码
+      this._categoryCredentials = cfg.categoryCredentials || {}
+      const creds = {}
+      for (const cat of (cfg.categories || [])) {
+        creds[cat] = (cfg.categoryCredentials && cfg.categoryCredentials[cat]) || { username: '', password: '', unitPrice: 22.98 }
+      }
+      // 从服务端加载分类
+      if (cfg.categories && cfg.categories.length) {
+        this.setData({ categories: cfg.categories, categoryCreds: creds, newCodeCategory: cfg.categories[0] })
+      }
       this.setData({
-        swimUser: cfg.username || '',
-        swimPwd: cfg.password || '',
         guideText: cfg.guideText || '',
-        unitPrice: cfg.unitPrice != null ? String(cfg.unitPrice) : '22.98',
-        qrPreview: cfg.paymentQR ? `https://erdinger.top/api/swim/qr-image/qr.png` : ''
+        qrPreview: cfg.paymentQR ? `https://erdinger.top/api/swim/qr-image/qr.png` : '',
+        swimEnabled: cfg.swimEnabled !== false
       })
     } catch { /* ignore */ }
   },
 
-  onSwimUser(e) { this.setData({ swimUser: e.detail.value }) },
-  onSwimPwd(e) { this.setData({ swimPwd: e.detail.value }) },
   onNewAdminPwd(e) { this.setData({ newAdminPwd: e.detail.value }) },
   onGuideText(e) { this.setData({ guideText: e.detail.value }) },
-  onUnitPrice(e) { this.setData({ unitPrice: e.detail.value }) },
+
+  async toggleSwimEnabled(e) {
+    const enabled = e.detail.value
+    this.setData({ swimEnabled: enabled })
+    try {
+      await api.updateAdminConfig({ swimEnabled: enabled })
+    } catch {
+      this.setData({ swimEnabled: !enabled })
+      wx.showToast({ title: '切换失败', icon: 'none' })
+    }
+  },
 
   async saveGuideText() {
     wx.showLoading({ title: '保存中...' })
     try {
       await api.updateAdminConfig({ guideText: this.data.guideText })
-      wx.hideLoading()
-      wx.showToast({ title: '已保存', icon: 'success' })
-    } catch {
-      wx.hideLoading()
-      wx.showToast({ title: '保存失败', icon: 'none' })
-    }
-  },
-
-  async saveUnitPrice() {
-    const price = parseFloat(this.data.unitPrice)
-    if (isNaN(price) || price <= 0) {
-      wx.showToast({ title: '请输入有效单价', icon: 'none' })
-      return
-    }
-    wx.showLoading({ title: '保存中...' })
-    try {
-      await api.updateAdminConfig({ unitPrice: price })
       wx.hideLoading()
       wx.showToast({ title: '已保存', icon: 'success' })
     } catch {
@@ -143,18 +159,6 @@ Page({
     }
   },
 
-  async saveSwimConfig() {
-    wx.showLoading({ title: '保存中...' })
-    try {
-      await api.updateAdminConfig({ username: this.data.swimUser, password: this.data.swimPwd })
-      wx.hideLoading()
-      wx.showToast({ title: '已保存', icon: 'success' })
-    } catch {
-      wx.hideLoading()
-      wx.showToast({ title: '保存失败', icon: 'none' })
-    }
-  },
-
   async saveAdminPwd() {
     if (!this.data.newAdminPwd) {
       wx.showToast({ title: '请输入新密码', icon: 'none' })
@@ -173,21 +177,51 @@ Page({
   },
 
   // ── 通行码 ──
+  selectCategory(e) {
+    this.setData({ newCodeCategory: e.currentTarget.dataset.cat })
+  },
+
+  onAddCategory() {
+    wx.navigateTo({ url: '/pages/admin/category-edit/category-edit' })
+  },
+
+  onEditCategory(e) {
+    const cat = e.currentTarget.dataset.cat
+    const creds = (this._categoryCredentials && this._categoryCredentials[cat]) || { username: '', password: '', unitPrice: 22.98 }
+    wx.navigateTo({
+      url: '/pages/admin/category-edit/category-edit?category=' + encodeURIComponent(cat) +
+        '&username=' + encodeURIComponent(creds.username || '') +
+        '&password=' + encodeURIComponent(creds.password || '') +
+        '&unitPrice=' + encodeURIComponent(String(creds.unitPrice ?? 22.98))
+    })
+  },
+  onCopyCodeName(e) {
+    wx.setClipboardData({
+      data: e.currentTarget.dataset.name,
+      success: () => wx.showToast({ title: '已复制', icon: 'success' })
+    })
+  },
   onNewCodeName(e) { this.setData({ newCodeName: e.detail.value }) },
   setCodeType(e) { this.setData({ newCodeType: e.currentTarget.dataset.type }) },
   onNewCodeMax(e) { this.setData({ newCodeMax: e.detail.value }) },
   onNewCodeExpire(e) { this.setData({ newCodeExpire: e.detail.value }) },
+  onNewCodeCategory(e) { this.setData({ newCodeCategory: e.detail.value }) },
   clearExpire() { this.setData({ newCodeExpire: '' }) },
 
   async loadPasscodes() {
     try {
       const list = await api.listPasscodes()
-      this.setData({ passcodes: list })
+      // 最新创建的排在前面
+      list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+      // 从已有通行证中收集分类，保持本地列表
+      const catSet = new Set(this.data.categories)
+      list.forEach(p => { if (p.category) catSet.add(p.category) })
+      this.setData({ passcodes: list, categories: [...catSet] })
     } catch { /* ignore */ }
   },
 
   async doCreateCode() {
-    const { newCodeName, newCodeType, newCodeMax, newCodeExpire } = this.data
+    const { newCodeName, newCodeType, newCodeMax, newCodeExpire, newCodeCategory } = this.data
     if (!newCodeName) return
 
     wx.showLoading({ title: '创建中...' })
@@ -196,15 +230,16 @@ Page({
         name: newCodeName,
         type: newCodeType,
         maxUses: parseInt(newCodeMax) || 0,
-        expireAt: newCodeExpire ? new Date(newCodeExpire).toISOString() : null
+        expireAt: newCodeExpire ? new Date(newCodeExpire).toISOString() : null,
+        category: newCodeCategory || 'swim',
       })
       wx.hideLoading()
       this.setData({ newCodeName: '', newCodeMax: '', newCodeExpire: '' })
       wx.showToast({ title: '已创建', icon: 'success' })
       this.loadPasscodes()
-    } catch {
+    } catch (e) {
       wx.hideLoading()
-      wx.showToast({ title: '创建失败', icon: 'none' })
+      wx.showToast({ title: e.error || '创建失败', icon: 'none' })
     }
   },
 
@@ -232,17 +267,62 @@ Page({
   async toggleCodeDetail(e) {
     const id = e.currentTarget.dataset.id
     if (this.data.expandedId === id) {
-      this.setData({ expandedId: '', codeDetail: { boundUsers: [] } })
+      this.setData({ expandedId: '', codeDetail: { boundUsers: [] }, swipedUserId: '' })
       return
     }
     wx.showLoading({ title: '加载中...' })
     try {
       const detail = await api.getPasscodeDetail(id)
       wx.hideLoading()
-      this.setData({ expandedId: id, codeDetail: detail })
+      this.setData({ expandedId: id, codeDetail: detail, swipedUserId: '' })
     } catch {
       wx.hideLoading()
       wx.showToast({ title: '加载失败', icon: 'none' })
+    }
+  },
+
+  // 分类筛选
+  onFilterCodeCategory(e) {
+    const cat = e.currentTarget.dataset.cat
+    this.setData({ codeFilterCategory: cat, expandedId: '', swipedUserId: '' })
+  },
+
+  // 左滑移除用户
+  onDetailRowTouchStart(e) {
+    this._touchX = e.touches[0].clientX
+    this._touchY = e.touches[0].clientY
+  },
+  onDetailRowTouchMove(e) {
+    const dx = e.touches[0].clientX - this._touchX
+    const dy = e.touches[0].clientY - this._touchY
+    if (Math.abs(dx) > Math.abs(dy) && dx < -30) {
+      this.setData({ swipedUserId: e.currentTarget.dataset.openid })
+    }
+  },
+  onDetailRowTouchEnd() {
+    // keep swiped state; tap elsewhere resets
+  },
+  async onRemoveUser(e) {
+    const openid = e.currentTarget.dataset.openid
+    const passcodeId = this.data.expandedId
+    const res = await wx.showModal({
+      title: '确认移除',
+      content: '移除该用户的绑定？',
+      confirmColor: '#ef4444'
+    })
+    if (!res.confirm) return
+    wx.showLoading({ title: '移除中...' })
+    try {
+      await api.unbindUser(openid, passcodeId)
+      wx.hideLoading()
+      wx.showToast({ title: '已移除', icon: 'success' })
+      this.setData({ swipedUserId: '' })
+      // refresh detail
+      const detail = await api.getPasscodeDetail(passcodeId)
+      this.setData({ codeDetail: detail })
+    } catch {
+      wx.hideLoading()
+      wx.showToast({ title: '移除失败', icon: 'none' })
     }
   },
 

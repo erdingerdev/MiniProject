@@ -1,0 +1,9 @@
+<view class="container theme-{{theme}}">
+  <view class="center-box">
+    <text class="guide">长按添加国哥微信</text>
+    <image class="qr-img" src="{{qrUrl}}" mode="widthFix" show-menu-by-longpress="{{true}}" wx:if="{{qrUrl}}"/>
+    <view class="qr-placeholder" wx:else>
+      <text>二维码尚未上传</text>
+    </view>
+  </view>
+</view>

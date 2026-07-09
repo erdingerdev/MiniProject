@@ -2,7 +2,7 @@ const api = require('../../utils/api')
 
 Page({
   data: {
-    list: [],
+    qrUrl: '',
     theme: 'dark'
   },
 
@@ -15,16 +15,18 @@ Page({
     })
   },
 
-  async onShow() {
+  onShow() {
     const theme = wx.getStorageSync('theme') || 'dark'
     if (this.data.theme !== theme) this.setData({ theme })
-    wx.setNavigationBarColor({
-      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
-      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
-    })
+    this.loadQR()
+  },
+
+  async loadQR() {
     try {
-      const list = await api.getLeaderboard()
-      this.setData({ list })
+      const cfg = await api.getAdminConfig()
+      if (cfg.paymentQR) {
+        this.setData({ qrUrl: 'https://erdinger.top/api/swim/qr-image/qr.png?t=' + Date.now() })
+      }
     } catch {}
   }
 })

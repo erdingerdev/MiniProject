@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  background: #080b11;
+  background: var(--bg-gradient, var(--bg));
   padding: 32rpx;
 }
 
@@ -12,15 +12,15 @@
   padding-top: 160rpx;
 }
 .icon-lg { font-size: 80rpx; margin-bottom: 24rpx; }
-.title { font-size: 40rpx; font-weight: 700; color: #e4e4e7; margin-bottom: 12rpx; }
-.hint { font-size: 26rpx; color: #71717a; margin-bottom: 40rpx; }
+.title { font-size: 40rpx; font-weight: 700; color: var(--text); margin-bottom: 12rpx; }
+.hint { font-size: 26rpx; color: var(--text-dim); margin-bottom: 40rpx; }
 .input-code {
   width: 400rpx;
   height: 80rpx;
-  background: rgba(255,255,255,0.06);
-  border: 1rpx solid rgba(255,255,255,0.12);
+  background: var(--bg-input);
+  border: 1rpx solid var(--border2);
   border-radius: 12rpx;
-  color: #e4e4e7;
+  color: var(--text);
   font-size: 30rpx;
   padding: 0 28rpx;
   box-sizing: border-box;
@@ -32,7 +32,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  background: linear-gradient(135deg, var(--accent), #3b82f6);
   color: #fff;
   border-radius: 12rpx;
   font-size: 28rpx;
@@ -45,7 +45,7 @@
 /* ── Tab 导航 ── */
 .tabs {
   display: flex;
-  border-bottom: 1rpx solid rgba(255,255,255,0.08);
+  border-bottom: 1rpx solid var(--border);
   margin-bottom: 32rpx;
 }
 .tab {
@@ -53,18 +53,35 @@
   text-align: center;
   padding: 24rpx 0;
   font-size: 28rpx;
-  color: #71717a;
+  color: var(--text-dim);
   border-bottom: 3rpx solid transparent;
 }
 .tab.active {
-  color: #22d3ee;
-  border-bottom-color: #22d3ee;
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ── 开关 ── */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.switch-label {
+  font-size: 26rpx;
+  color: var(--text);
+}
+.switch-hint {
+  font-size: 22rpx;
+  color: #f87171;
+  margin-top: 12rpx;
+  display: block;
 }
 
 /* ── Section ── */
 .section {
-  background: rgba(255,255,255,0.03);
-  border: 1rpx solid rgba(255,255,255,0.06);
+  background: var(--bg-card);
+  border: 1rpx solid var(--bg-input);
   border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 24rpx;
@@ -72,7 +89,7 @@
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #a1a1aa;
+  color: var(--text-dim2);
   margin-bottom: 20rpx;
   display: block;
 }
@@ -81,10 +98,10 @@
 .field {
   width: 100%;
   height: 72rpx;
-  background: rgba(255,255,255,0.06);
-  border: 1rpx solid rgba(255,255,255,0.1);
+  background: var(--bg-input);
+  border: 1rpx solid var(--border2);
   border-radius: 10rpx;
-  color: #e4e4e7;
+  color: var(--text);
   font-size: 26rpx;
   padding: 0 20rpx;
   box-sizing: border-box;
@@ -99,8 +116,84 @@
   display: flex;
   align-items: center;
 }
+/* ── 分类横向选择 ── */
+.cat-scroll {
+  display: flex;
+  white-space: nowrap;
+  margin-bottom: 16rpx;
+  height: 64rpx;
+}
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 56rpx;
+  padding: 0 28rpx;
+  border-radius: 28rpx;
+  font-size: 24rpx;
+  background: var(--bg-card2);
+  color: var(--text-dim);
+  border: 1rpx solid var(--border);
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.cat-chip.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.cat-chip.editing {
+  opacity: 0.4;
+  border-style: dashed;
+  border-color: rgba(248,113,113,0.4);
+}
+.cat-add {
+  width: 56rpx;
+  padding: 0;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 300;
+  color: var(--text-dim2);
+  border-style: dashed;
+}
+.cat-add.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+.add-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+.cat-input {
+  flex: 1;
+  margin-bottom: 0;
+  height: 64rpx;
+}
+.add-cat-actions {
+  display: flex;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+.cat-btn {
+  width: auto;
+  padding: 0 24rpx;
+  height: 64rpx;
+  font-size: 24rpx;
+}
+.cat-btn-cancel {
+  width: auto;
+  padding: 0 24rpx;
+  height: 64rpx;
+  font-size: 24rpx;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1rpx solid var(--border2);
+}
+
 .picker-text {
-  color: #e4e4e7;
+  color: var(--text);
   font-size: 26rpx;
 }
 .picker-text:empty::before {
@@ -120,23 +213,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6,182,212,0.15);
-  color: #22d3ee;
+  background: var(--accent-bg);
+  color: var(--accent);
   border-radius: 10rpx;
   font-size: 26rpx;
-  border: 1rpx solid rgba(6,182,212,0.25);
+  border: 1rpx solid var(--accent-border);
 }
 .btn-sm[disabled] { opacity: 0.3; }
-.btn-danger { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.2); }
+.btn-danger { background: var(--danger-bg); color: #f87171; border-color: var(--danger-border); }
 
 /* ── 收款码预览 ── */
 .preview-qr { width: 300rpx; border-radius: 12rpx; margin-bottom: 16rpx; }
 .qr-empty {
   width: 300rpx; height: 300rpx;
-  background: rgba(255,255,255,0.04);
+  background: var(--bg-card2);
   border-radius: 12rpx;
   display: flex; align-items: center; justify-content: center;
-  color: #52525b; font-size: 24rpx; margin-bottom: 16rpx;
+  color: var(--text-dim2); font-size: 24rpx; margin-bottom: 16rpx;
 }
 
 /* ── 类型选择 ── */
@@ -146,23 +239,32 @@
   padding: 16rpx 0;
   border-radius: 10rpx;
   font-size: 26rpx;
-  background: rgba(255,255,255,0.04);
-  color: #71717a;
-  border: 1rpx solid rgba(255,255,255,0.08);
+  background: var(--bg-card2);
+  color: var(--text-dim);
+  border: 1rpx solid var(--border);
 }
-.chip.active { background: rgba(6,182,212,0.15); color: #22d3ee; border-color: rgba(6,182,212,0.3); }
+.chip.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-border); }
 
 /* ── 通行码/用户项 ── */
 .code-item {
   display: flex;
   align-items: center;
   padding: 20rpx 0;
-  border-bottom: 1rpx solid rgba(255,255,255,0.05);
+  border-bottom: 1rpx solid var(--border);
   flex-wrap: wrap;
 }
 .code-info { flex: 1; min-width: 0; }
-.code-name { font-size: 28rpx; color: #e4e4e7; display: block; }
-.code-meta { font-size: 22rpx; color: #52525b; display: block; margin-top: 4rpx; }
+.code-name-row { display: flex; align-items: center; gap: 16rpx; margin-bottom: 4rpx; }
+.code-name { font-size: 28rpx; color: var(--text); }
+.code-copy {
+  font-size: 20rpx;
+  color: var(--accent);
+  padding: 4rpx 16rpx;
+  border: 1rpx solid var(--accent-border);
+  border-radius: 6rpx;
+  flex-shrink: 0;
+}
+.code-meta { font-size: 22rpx; color: var(--text-dim2); display: block; margin-top: 4rpx; }
 .code-del {
   width: 56rpx; height: 56rpx;
   line-height: 56rpx; text-align: center;
@@ -172,19 +274,43 @@
   width: 100%;
   margin-top: 12rpx;
   padding: 16rpx;
-  background: rgba(255,255,255,0.03);
+  background: var(--bg-card);
   border-radius: 10rpx;
+}
+.detail-row-wrap {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1rpx solid var(--bg-card2);
+}
+.detail-row-wrap:last-child { border-bottom: none; }
+.detail-row-delete {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 120rpx;
+  background: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 26rpx;
 }
 .detail-row, .user-item {
   display: flex;
   align-items: center;
   padding: 12rpx 0;
-  border-bottom: 1rpx solid rgba(255,255,255,0.04);
+  position: relative;
+  background: var(--bg-card);
+  transition: transform 0.2s ease;
+}
+.detail-row.swiped {
+  transform: translateX(-120rpx);
 }
 .detail-row:last-child, .user-item:last-child { border-bottom: none; }
 .u-avatar {
   width: 64rpx; height: 64rpx; border-radius: 50%;
-  background: rgba(255,255,255,0.06); margin-right: 16rpx;
+  background: var(--bg-input); margin-right: 16rpx;
 }
 .u-avatar-empty {
   display: flex;
@@ -197,20 +323,78 @@
   opacity: 0.3;
 }
 .u-info { flex: 1; min-width: 0; }
-.u-name { font-size: 26rpx; color: #e4e4e7; display: block; }
-.u-stats { font-size: 22rpx; color: #52525b; display: block; margin-top: 4rpx; }
-.detail-empty { text-align: center; color: #52525b; font-size: 24rpx; padding: 24rpx; }
-.empty { text-align: center; color: #52525b; font-size: 24rpx; padding: 40rpx; }
+.u-name { font-size: 26rpx; color: var(--text); display: block; }
+.u-stats { font-size: 22rpx; color: var(--text-dim2); display: block; margin-top: 4rpx; }
+.detail-empty { text-align: center; color: var(--text-dim2); font-size: 24rpx; padding: 24rpx; }
+.empty { text-align: center; color: var(--text-dim2); font-size: 24rpx; padding: 40rpx; }
+
+/* ── 分类列表 ── */
+.cat-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 16rpx;
+  border-bottom: 1rpx solid var(--border);
+}
+.cat-item:last-child { border-bottom: none; }
+.cat-item-body { flex: 1; min-width: 0; }
+.cat-item-name {
+  font-size: 28rpx;
+  color: var(--text);
+  display: block;
+}
+.cat-item-creds {
+  font-size: 22rpx;
+  color: var(--text-dim2);
+  display: block;
+  margin-top: 6rpx;
+}
+.cat-item-arrow {
+  font-size: 36rpx;
+  color: var(--text-dim2);
+  margin-left: 12rpx;
+}
+
+/* ── 居中弹窗 ── */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--overlay);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-card {
+  width: 580rpx;
+  background: var(--modal-bg);
+  border-radius: 24rpx;
+  padding: 48rpx 40rpx 40rpx;
+  animation: modalIn 0.25s ease;
+}
+@keyframes modalIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  display: block;
+  margin-bottom: 32rpx;
+}
+
+/* keep old cat-scroll/chip for passcode creation form */
 
 /* ── 日志 ── */
 .log-item {
   padding: 20rpx 0;
-  border-bottom: 1rpx solid rgba(255,255,255,0.05);
+  border-bottom: 1rpx solid var(--border);
 }
 .log-item:last-child { border-bottom: none; }
 .log-time {
   font-size: 22rpx;
-  color: #52525b;
+  color: var(--text-dim2);
   margin-bottom: 6rpx;
 }
 .log-body {
@@ -220,9 +404,13 @@
 }
 .log-user {
   font-size: 26rpx;
-  color: #e4e4e7;
+  color: var(--text);
 }
 .log-code {
   font-size: 26rpx;
-  color: #22d3ee;
+  color: var(--accent);
 }
+
+/* ── 浅色模式渐变背景适配 ── */
+.theme-light .tab { color: rgba(255,255,255,0.55); }
+.theme-light .section-title { color: #333; }

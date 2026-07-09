@@ -1,7 +1,52 @@
+/* ── 日/夜间主题变量 ── */
+/* 默认夜间(深色) */
 page {
+  --bg: #080b11;
+  --bg-card: rgba(255,255,255,0.03);
+  --bg-card2: rgba(255,255,255,0.06);
+  --bg-input: rgba(255,255,255,0.06);
+  --text: #e4e4e7;
+  --text-dim: #71717a;
+  --text-dim2: #52525b;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+  --accent: #22d3ee;
+  --accent-bg: rgba(6,182,212,0.15);
+  --accent-border: rgba(6,182,212,0.25);
+  --danger-bg: rgba(239,68,68,0.12);
+  --danger-border: rgba(239,68,68,0.2);
+  --modal-bg: #111827;
+  --overlay: rgba(4,8,20,0.7);
+  /* 语义色（不随主题） */
+  --red: #ef4444;
+  --red-text: #f87171;
+  --green: #34d399;
+  --yellow: #fbbf24;
+
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   background: #080b11;
-  color: #e4e4e7;
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
+}
+
+/* 浅色主题覆盖 */
+.theme-light {
+  --bg-gradient: linear-gradient(180deg, #442E9A, #05D1D3);
+  --bg: #ffffff;
+  --bg-card: rgba(255,255,255,0.85);
+  --bg-card2: rgba(255,255,255,0.7);
+  --bg-input: rgba(255,255,255,0.6);
+  --text: #0f1419;
+  --text-dim: #4b5563;
+  --text-dim2: #6b7280;
+  --border: rgba(0,0,0,0.06);
+  --border2: rgba(0,0,0,0.1);
+  --accent: #05D1D3;
+  --accent-bg: rgba(5,209,211,0.1);
+  --accent-border: rgba(5,209,211,0.25);
+  --danger-bg: rgba(239,68,68,0.08);
+  --danger-border: rgba(239,68,68,0.2);
+  --modal-bg: #ffffff;
+  --overlay: rgba(0,0,0,0.35);
 }
