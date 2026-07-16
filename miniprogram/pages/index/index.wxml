@@ -78,6 +78,7 @@
 
   <view class="footer">
     <text>得闲时 · 意自在</text>
+    <text class="feedback-link" bindtap="goFeedback">💬 意见反馈</text>
   </view>
 
 </view>

@@ -156,7 +156,7 @@
     <!-- ====== 日志 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='logs'}}">
       <view class="section">
-        <text class="section-title">使用日志 (最近 200 条)</text>
+        <text class="section-title">使用日志 (最近 20 条)</text>
         <view class="log-item" wx:for="{{logs}}" wx:key="id">
           <view class="log-time">{{item.formattedTime}}</view>
           <view class="log-body">

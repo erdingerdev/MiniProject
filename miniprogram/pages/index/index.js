@@ -166,6 +166,10 @@ Page({
     wx.navigateTo({ url: '/pages/admin/admin' })
   },
 
+  goFeedback() {
+    wx.navigateTo({ url: '/pages/feedback/feedback' })
+  },
+
   goMine() {
     if (!app.globalData.openid || !app.globalData.nickname || !app.globalData.avatar) {
       wx.navigateTo({ url: '/pages/swim/swim?from=mine' })

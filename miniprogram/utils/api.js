@@ -225,33 +225,34 @@ const listUsersCB = async () => {
     if (r.data.length < batchSize) break
     pcSkip += batchSize
   }
+  // 统计每个用户的使用次数
+  const logStats = {}
+  let logSkip = 0
+  while (true) {
+    const r = await getDb().collection('usage_logs').skip(logSkip).limit(batchSize).get()
+    if (r.data.length === 0) break
+    r.data.forEach(l => { logStats[l.openid] = (logStats[l.openid] || 0) + (l.peopleCount || 1) })
+    if (r.data.length < batchSize) break
+    logSkip += batchSize
+  }
   return users.map(u => {
     const names = (u.boundPasscodeIds || []).map(id => pcMap[id] || '').filter(Boolean)
-    return { openid: u.openid, nickname: u.nickname, avatar: u.avatar, boundPasscodeName: names.join(', ') || '无' }
-  })
+    return {
+      openid: u.openid, nickname: u.nickname, avatar: u.avatar,
+      boundPasscodeName: names.join(', ') || '无',
+      totalCount: logStats[u.openid] || 0
+    }
+  }).sort((a, b) => b.totalCount - a.totalCount)
 }
 const getLogsCB = async () => {
-  const allLogs = [], batchSize = 20; let skip = 0
-  try {
-    while (true) {
-      const r = await getDb().collection('usage_logs').skip(skip).limit(batchSize).get()
-      if (r.data.length === 0) break
-      allLogs.push(...r.data)
-      if (r.data.length < batchSize) break
-      skip += batchSize
-    }
-  } catch(e) { console.error('getLogsCB fetch error:', e); return [] }
-  const allUsers = []; let uSkip = 0
-  while (true) {
-    const r = await getDb().collection('app_users').skip(uSkip).limit(batchSize).get()
-    if (r.data.length === 0) break
-    allUsers.push(...r.data)
-    if (r.data.length < batchSize) break
-    uSkip += batchSize
-  }
+  // 只取最近 20 条，排序显示
+  const res = await getDb().collection('usage_logs').orderBy('timestamp', 'desc').limit(20).get()
+  const openids = [...new Set(res.data.map(l => l.openid))]
+  if (openids.length === 0) return []
+  const users = await getDb().collection('app_users').where({ openid: getCmd().in(openids) }).get()
   const userMap = {}
-  allUsers.forEach(u => { userMap[u.openid] = u.nickname })
-  return allLogs.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || '')).map(l => ({
+  users.data.forEach(u => { userMap[u.openid] = u.nickname })
+  return res.data.map(l => ({
     id: l._id, openid: l.openid, passcodeId: l.passcodeId, passcodeName: l.passcodeName,
     peopleCount: l.peopleCount, formattedTime: l.timestamp ? l.timestamp.slice(0, 19).replace('T', ' ') : '',
     nickname: userMap[l.openid] || '匿名'

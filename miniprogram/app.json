@@ -6,7 +6,8 @@
     "pages/admin/category-edit/category-edit",
     "pages/leaderboard/leaderboard",
     "pages/mine/mine",
-    "pages/contact/contact"
+    "pages/contact/contact",
+    "pages/feedback/feedback"
   ],
   "lazyCodeLoading": "requiredComponents",
   "window": {

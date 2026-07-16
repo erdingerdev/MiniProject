@@ -244,6 +244,13 @@
   font-size: 22rpx;
   color: var(--text-dim);
   letter-spacing: 6rpx;
+  display: block;
+  text-align: center;
+}
+.feedback-link {
+  margin-top: 12rpx;
+  color: var(--accent) !important;
+  letter-spacing: 2rpx !important;
 }
 
 /* ── 日/夜间切换按钮 ── */
