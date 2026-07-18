@@ -272,8 +272,45 @@ Page({
     this.setData({ peopleCount: count, totalPrice: total })
   },
 
-  confirmPeople() {
-    this.setData({ status: 'showQR', showPayButton: false })
+  async confirmPeople() {
+    wx.showLoading({ title: '创建订单...' })
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'wxPay',
+        data: {
+          openid: app.globalData.openid,
+          amount: parseFloat(this.data.totalPrice),
+          description: `${this.data.passcodeCategory}游泳票 x${this.data.peopleCount}人`
+        }
+      })
+      wx.hideLoading()
+      if (!res.result.ok) {
+        wx.showToast({ title: res.result.error || '支付失败', icon: 'none' })
+        return
+      }
+      // 调起微信支付
+      const payment = res.result.payment
+      wx.requestPayment({
+        timeStamp: payment.timeStamp,
+        nonceStr: payment.nonceStr,
+        package: payment.package,
+        signType: payment.signType,
+        paySign: payment.paySign,
+        success: async () => {
+          wx.showLoading({ title: '处理中...' })
+          await api.confirmPaymentCB(app.globalData.openid, this.data.passcodeId, this.data.passcodeName, this.data.peopleCount)
+          const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
+          wx.hideLoading()
+          this.setData({ status: 'showCredentials', credentials: cred })
+        },
+        fail: () => {
+          wx.showToast({ title: '支付取消', icon: 'none' })
+        }
+      })
+    } catch (e) {
+      wx.hideLoading()
+      wx.showToast({ title: '支付失败，请重试', icon: 'none' })
+    }
   },
 
   // ── 加载全局配置(收款码/引导文案) ──
