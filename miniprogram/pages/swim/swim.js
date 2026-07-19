@@ -44,7 +44,14 @@ Page({
       backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
     })
     if (['loading', 'needLogin', 'needPasscode', 'needProfile'].includes(this.data.status)) {
-      await this.initFlow()
+      // 检查是否有 2 小时内的缓存账号
+      const lastCred = wx.getStorageSync('lastCredentials')
+      const lastTime = wx.getStorageSync('lastCredentialsTime') || 0
+      if (lastCred && lastCred.username && (Date.now() - lastTime < 7200000)) {
+        this.setData({ status: 'showCredentials', credentials: lastCred })
+      } else {
+        await this.initFlow()
+      }
     }
     if (this.data.status === 'showQR' && !this.data.showPayButton) {
       this.setData({ showPayButton: true })
@@ -301,6 +308,8 @@ Page({
           await api.confirmPaymentCB(app.globalData.openid, this.data.passcodeId, this.data.passcodeName, this.data.peopleCount)
           const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
           wx.hideLoading()
+          wx.setStorageSync('lastCredentials', cred)
+          wx.setStorageSync('lastCredentialsTime', Date.now())
           this.setData({ status: 'showCredentials', credentials: cred })
         },
         fail: () => {
