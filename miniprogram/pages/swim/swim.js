@@ -309,7 +309,9 @@ Page({
       })
     } catch (e) {
       wx.hideLoading()
-      wx.showToast({ title: '支付失败，请重试', icon: 'none' })
+      // 支付未就绪时回退到收款码流程
+      console.warn('支付失败，回退收款码:', e.message || e)
+      this.setData({ status: 'showQR', showPayButton: false })
     }
   },
 
