@@ -309,9 +309,7 @@ Page({
       })
     } catch (e) {
       wx.hideLoading()
-      // 支付未就绪时回退到收款码流程
-      console.warn('支付失败，回退收款码:', e.message || e)
-      this.setData({ status: 'showQR', showPayButton: false })
+      wx.showToast({ title: '支付失败，请直接联系国哥', icon: 'none', duration: 2500 })
     }
   },
 
