@@ -16,10 +16,14 @@ Page({
     swimEnabled: true,
     theme: 'dark',
     starDots: [],
-    themeTransing: false
+    themeTransing: false,
+    clockTime: '',
+    earthLeft: 0,
+    earthTop: 0
   },
 
   onLoad() {
+    this.startClock()
     const theme = wx.getStorageSync('theme') || 'dark'
     if (this.data.theme !== theme) this.setData({ theme })
     wx.setNavigationBarColor({
@@ -27,6 +31,21 @@ Page({
       backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
     })
     this.genStarDots()
+    this.genEarthPos()
+  },
+
+  genEarthPos() {
+    const w = wx.getSystemInfoSync().windowWidth
+    const h = wx.getSystemInfoSync().windowHeight
+    const rpxRatio = 750 / w
+    const vw = 750  // rpx width
+    const vh = h * rpxRatio  // rpx height
+    // 随机位置，保证部分可见
+    const size = 160
+    this.setData({
+      earthLeft: Math.random() * (vw - 40) - size * 0.6,
+      earthTop: Math.random() * (vh - 40) - size * 0.6
+    })
   },
 
   genStarDots() {
@@ -143,6 +162,18 @@ Page({
     this.setData({ dots })
   },
 
+  startClock() {
+    this.updateClock()
+    this._clockTimer = setInterval(() => this.updateClock(), 1000)
+  },
+
+  updateClock() {
+    const now = new Date()
+    const h = String(now.getHours()).padStart(2, '0')
+    const m = String(now.getMinutes()).padStart(2, '0')
+    this.setData({ clockTime: h + ':' + m })
+  },
+
   goSwim() {
     if (!this.data.swimEnabled) {
       wx.showToast({ title: '系统维护中，请直接联系国哥', icon: 'none', duration: 2500 })
@@ -176,6 +207,14 @@ Page({
       return
     }
     wx.navigateTo({ url: '/pages/mine/mine' })
+  },
+
+  onHide() {
+    if (this._clockTimer) { clearInterval(this._clockTimer); this._clockTimer = null }
+  },
+
+  onUnload() {
+    if (this._clockTimer) { clearInterval(this._clockTimer); this._clockTimer = null }
   },
 
   onToggleTheme() {

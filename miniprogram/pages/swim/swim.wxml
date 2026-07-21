@@ -64,7 +64,7 @@
       <text class="price-label">单价 {{unitPrice}} 元 × {{peopleCount}} 人</text>
       <text class="price-total">合计 {{totalPrice}} 元</text>
     </view>
-    <button class="btn-primary" bindtap="confirmPeople">确认并查看收款码</button>
+    <button class="btn-primary" bindtap="confirmPeople">确认支付 {{totalPrice}} 元</button>
   </view>
 
   <!-- 状态: 展示收款码 -->

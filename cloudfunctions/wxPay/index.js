@@ -8,8 +8,8 @@ const API_KEY = '2sg2wWIoR9cYaK2OtuBEYXbrAZ0R5etm'
 const crypto = require('crypto')
 
 function sign(timestamp, nonceStr, prepayId) {
-  const str = `${APPID}\n${timestamp}\n${nonceStr}\nprepay_id=${prepayId}\n`
-  return crypto.createHmac('sha256', API_KEY).update(str).digest('hex')
+  const str = `appId=${APPID}&nonceStr=${nonceStr}&package=prepay_id=${prepayId}&signType=MD5&timeStamp=${timestamp}&key=${API_KEY}`
+  return crypto.createHash('md5').update(str).digest('hex').toUpperCase()
 }
 
 exports.main = async (event, context) => {
@@ -67,8 +67,11 @@ exports.main = async (event, context) => {
         xml2js.parseString(body, (err, result) => {
           if (err) { resolve({ ok: false, error: '解析失败' }); return }
           const data = result.xml
+          console.log('WXPay response:', JSON.stringify(data))
           if (data.return_code[0] !== 'SUCCESS' || data.result_code[0] !== 'SUCCESS') {
-            resolve({ ok: false, error: data.err_code_des ? data.err_code_des[0] : '下单失败' })
+            const errMsg = data.err_code_des ? data.err_code_des[0] : (data.return_msg ? data.return_msg[0] : '下单失败')
+            console.error('WXPay error:', errMsg)
+            resolve({ ok: false, error: errMsg })
             return
           }
 
@@ -84,7 +87,7 @@ exports.main = async (event, context) => {
               timeStamp: timestamp,
               nonceStr,
               package: `prepay_id=${prepayId}`,
-              signType: 'HMAC-SHA256',
+              signType: 'MD5',
               paySign
             }
           })

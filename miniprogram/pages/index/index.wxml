@@ -1,4 +1,8 @@
 <view class="container theme-{{theme}}">
+  <!-- 地球装饰 -->
+  <view class="earth-orb" style="left: {{earthLeft}}rpx; top: {{earthTop}}rpx;">
+    <image class="earth-img" src="/assets/earth.png" mode="aspectFit"/>
+  </view>
   <!-- 主题切换过渡动画 -->
   <view class="theme-transition {{themeTransing ? 'active' : ''}}" wx:if="{{themeTransing}}">
     <view class="transit-ball transit-out {{theme === 'dark' ? 'is-moon' : 'is-sun'}}"></view>
@@ -61,6 +65,7 @@
       <view class="card-icon">🏊</view>
       <text class="card-title">获取游泳票</text>
       <text class="card-desc">通行码验证 · 获取入场凭证</text>
+      <view class="card-clock {{theme === 'light' ? 'cc-light' : ''}}">{{clockTime}}</view>
     </view>
     <view class="card-row" style="animation-delay: 0.3s">
       <view class="card card-half" bindtap="goMine">
