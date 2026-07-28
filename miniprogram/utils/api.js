@@ -28,7 +28,7 @@ function request(method, path, data) {
 
 const getUserPasscodeStatusCB = async (openid) => {
   if (!getDb()) throw new Error('CloudBase 未初始化')
-  const userRes = await getDb().collection('app_users').where({ openid }).get()
+  const userRes = await getDb().collection('app_users').where({ _openid: openid }).get()
   if (userRes.data.length === 0) return { hasPasscode: false, passcodes: [] }
   const user = userRes.data[0]
   const ids = user.boundPasscodeIds || []
@@ -42,14 +42,12 @@ const getUserPasscodeStatusCB = async (openid) => {
   return { hasPasscode: passcodes.length > 0, passcodes, activeCount: active.length }
 }
 const getSwimSettingsCB = async () => {
-  if (!getDb()) throw new Error('CloudBase 未初始化')
-  const res = await getDb().collection('app_config').doc('config').get()
-  const cfg = res.data
-  return { swimEnabled: (cfg.swimConfig && cfg.swimConfig.swimEnabled !== false) }
+  const res = await wx.cloud.callFunction({ name: 'getSwimSettings2' })
+  return res.result
 }
 const getBindStatusCB = async (openid) => {
   if (!getDb()) throw new Error('CloudBase 未初始化')
-  const userRes = await getDb().collection('app_users').where({ openid }).get()
+  const userRes = await getDb().collection('app_users').where({ _openid: openid }).get()
   const ids = (userRes.data[0] && userRes.data[0].boundPasscodeIds) || []
   if (ids.length === 0) return { bound: false, passcodes: [], validCount: 0 }
   const pcRes = await getDb().collection('passcodes').where({ _id: getCmd().in(ids) }).get()
@@ -76,28 +74,41 @@ const bindPasscodeCB = async (codeName, openid, nickname, avatar) => {
   if (pcRes.data.length === 0) throw { error: '通行码不存在' }
   const pc = pcRes.data[0]
   if (pc.type === 'exclusive') {
-    const userRes = await getDb().collection('app_users').where({ boundPasscodeIds: pc._id }).get()
-    if (userRes.data.length > 0) throw { error: '该通行码已被他人绑定' }
+    const cfRes = await wx.cloud.callFunction({ name: 'adminCheckPasscode', data: { action: 'checkExclusive', data: { passcodeId: pc._id } } })
+    if (cfRes.result.ok && cfRes.result.bound) throw { error: '该通行码已被他人绑定' }
   }
-  const userRes = await getDb().collection('app_users').where({ openid }).get()
+  const userRes = await getDb().collection('app_users').where({ _openid: openid }).get()
   if (userRes.data.length > 0) {
     const user = userRes.data[0]
     if (!user.boundPasscodeIds.includes(pc._id)) {
-      await getDb().collection('app_users').doc(user._id).update({
-        data: { boundPasscodeIds: getCmd().push(pc._id), nickname: nickname || user.nickname, avatar: avatar || user.avatar }
+      const ids = [...user.boundPasscodeIds, pc._id]
+      await getDb().collection('app_users').where({ _openid: openid }).update({
+        data: { boundPasscodeIds: ids, nickname: nickname || user.nickname, avatar: avatar || user.avatar }
       })
     }
   } else {
-    await getDb().collection('app_users').add({ data: { openid, nickname, avatar, boundPasscodeIds: [pc._id] } })
+    await getDb().collection('app_users').add({ data: { _openid: openid, openid, nickname, avatar, boundPasscodeIds: [pc._id] } })
   }
   return await getBindStatusCB(openid)
 }
-const confirmPaymentCB = async (openid, passcodeId, passcodeName, peopleCount) => {
+const confirmPaymentCB = async (openid, passcodeId, passcodeName, peopleCount, extra = {}) => {
   if (!getDb()) throw new Error('CloudBase 未初始化')
-  await getDb().collection('usage_logs').add({ data: {
-    openid, passcodeId, passcodeName, peopleCount, timestamp: new Date().toISOString()
+  const res = await getDb().collection('orders').add({ data: {
+    openid, passcodeId, passcodeName, peopleCount,
+    pool: extra.pool || passcodeName || '',
+    username: extra.username || '',
+    password: extra.password || '',
+    unitPrice: extra.unitPrice || 0,
+    totalPrice: extra.totalPrice || 0,
+    paidAt: extra.paidAt || Date.now(),
+    timeStr: extra.timeStr || '',
+    type: 'payment', timestamp: new Date().toISOString(), redeemed: false
   }})
-  return { ok: true }
+  // 同步写入打卡记录
+  getDb().collection('checkins').add({ data: {
+    openid, type: 'payment', peopleCount, timestamp: new Date().toISOString()
+  }}).catch(() => {})
+  return { ok: true, orderId: res._id }
 }
 const getAdminConfigCB = async () => {
   if (!getDb()) throw new Error('CloudBase 未初始化')
@@ -152,20 +163,16 @@ const saveCategoriesCB = async (categories) => {
   await getDb().collection('app_config').doc('config').update({ data: { categories, categoryCredentials: creds } })
   return { categories }
 }
-const listPasscodesCB = async () => {
-  const all = [], batchSize = 20
-  let skip = 0
-  while (true) {
-    const res = await getDb().collection('passcodes').where({ deleted: false }).skip(skip).limit(batchSize).get()
-    if (res.data.length === 0) break
-    all.push(...res.data)
-    if (res.data.length < batchSize) break
-    skip += batchSize
+const listPasscodesCB = async (skip = 0, limit = 20, search = '') => {
+  let query = getDb().collection('passcodes').where({ deleted: false })
+  if (search) {
+    query = query.where({ name: getDb().RegExp({ regexp: search, options: 'i' }) })
   }
-  return all.map(p => ({
+  const res = await query.orderBy('createdAt', 'desc').skip(skip).limit(limit).get()
+  return res.data.map(p => ({
     id: p._id, name: p.name, type: p.type, maxUses: p.maxUses, expireAt: p.expireAt,
     category: p.category, createdAt: p.createdAt ? p.createdAt.slice(0, 19).replace('T', ' ') : '',
-    usageCount: p.usageCount || 0
+    unitPrice: p.unitPrice || 0, usageCount: p.usageCount || 0
   }))
 }
 const createPasscodeCB = async (data) => {
@@ -179,63 +186,48 @@ const createPasscodeCB = async (data) => {
   return { id: res._id }
 }
 const deletePasscodeCB = async (id) => {
-  await getDb().collection('passcodes').doc(id).update({ data: { deleted: true } })
-  const userRes = await getDb().collection('app_users').where({ boundPasscodeIds: id }).get()
-  for (const user of userRes.data) {
-    await getDb().collection('app_users').doc(user._id).update({ data: { boundPasscodeIds: getCmd().pull(id) } })
-  }
+  const cfRes = await wx.cloud.callFunction({ name: 'adminCheckPasscode', data: { action: 'deletePasscode', data: { passcodeId: id } } })
+  if (!cfRes.result.ok) throw { error: cfRes.result.error || '删除失败' }
   return { ok: true }
 }
 const unbindUserCB = async (openid, passcodeId) => {
-  const userRes = await getDb().collection('app_users').where({ openid }).get()
-  if (userRes.data.length > 0) {
-    await getDb().collection('app_users').doc(userRes.data[0]._id).update({ data: { boundPasscodeIds: getCmd().pull(passcodeId) } })
-  }
+  await wx.cloud.callFunction({ name: 'adminCheckPasscode', data: { action: 'unbindUser', data: { openid, passcodeId } } })
   return { ok: true }
 }
 const getPasscodeDetailCB = async (id) => {
-  const pc = await getDb().collection('passcodes').doc(id).get()
-  if (!pc.data || pc.data.deleted) throw { error: 'not found' }
-  const users = await getDb().collection('app_users').where({ boundPasscodeIds: id }).get()
-  const logs = await getDb().collection('usage_logs').where({ passcodeId: id }).get()
-  const boundUsers = users.data.map(u => {
-    const uLogs = logs.data.filter(l => l.openid === u.openid)
-    const total = uLogs.reduce((s, l) => s + (l.peopleCount || 1), 0)
-    return { openid: u.openid, nickname: u.nickname, avatar: u.avatar, totalCount: total }
-  })
-  return { usageCount: logs.data.length, boundUsers }
+  const cfRes = await wx.cloud.callFunction({ name: 'adminCheckPasscode', data: { action: 'getPasscodeDetail', data: { passcodeId: id } } })
+  if (!cfRes.result.ok) throw { error: cfRes.result.error || '查询失败' }
+  return cfRes.result
 }
-const listUsersCB = async () => {
-  const allUsers = [], batchSize = 20
-  let skip = 0
-  while (true) {
-    const res = await getDb().collection('app_users').skip(skip).limit(batchSize).get()
-    if (res.data.length === 0) break
-    allUsers.push(...res.data)
-    if (res.data.length < batchSize) break
-    skip += batchSize
+let _userStatsCache = null
+const listUsersCB = async (skip = 0, limit = 20) => {
+  // 首次加载时预计算统计缓存（穿码映射 + 使用次数）
+  if (!_userStatsCache) {
+    const pcMap = {}
+    let pcSkip = 0
+    while (true) {
+      const r = await getDb().collection('passcodes').where({ deleted: false }).skip(pcSkip).limit(20).get()
+      if (r.data.length === 0) break
+      r.data.forEach(p => { pcMap[p._id] = p.name })
+      if (r.data.length < 20) break
+      pcSkip += 20
+    }
+    const logStats = {}
+    for (const coll of ['orders', 'checkins', 'usage_logs']) {
+      let s = 0
+      while (true) {
+        const r = await getDb().collection(coll).skip(s).limit(20).get()
+        if (r.data.length === 0) break
+        r.data.forEach(l => { logStats[l.openid] = (logStats[l.openid] || 0) + (l.peopleCount || 1) })
+        if (r.data.length < 20) break
+        s += 20
+      }
+    }
+    _userStatsCache = { pcMap, logStats }
   }
-  const users = allUsers
-  const pcMap = {}
-  let pcSkip = 0
-  while (true) {
-    const r = await getDb().collection('passcodes').where({ deleted: false }).skip(pcSkip).limit(batchSize).get()
-    if (r.data.length === 0) break
-    r.data.forEach(p => { pcMap[p._id] = p.name })
-    if (r.data.length < batchSize) break
-    pcSkip += batchSize
-  }
-  // 统计每个用户的使用次数
-  const logStats = {}
-  let logSkip = 0
-  while (true) {
-    const r = await getDb().collection('usage_logs').skip(logSkip).limit(batchSize).get()
-    if (r.data.length === 0) break
-    r.data.forEach(l => { logStats[l.openid] = (logStats[l.openid] || 0) + (l.peopleCount || 1) })
-    if (r.data.length < batchSize) break
-    logSkip += batchSize
-  }
-  return users.map(u => {
+  const { pcMap, logStats } = _userStatsCache
+  const res = await getDb().collection('app_users').skip(skip).limit(limit).get()
+  const list = res.data.map(u => {
     const names = (u.boundPasscodeIds || []).map(id => pcMap[id] || '').filter(Boolean)
     return {
       openid: u.openid, nickname: u.nickname, avatar: u.avatar,
@@ -243,26 +235,55 @@ const listUsersCB = async () => {
       totalCount: logStats[u.openid] || 0
     }
   }).sort((a, b) => b.totalCount - a.totalCount)
+  return list
+}
+const countUsersCB = async () => {
+  const res = await getDb().collection('app_users').count()
+  return res.total || 0
+}
+const countPasscodesCB = async () => {
+  const res = await getDb().collection('passcodes').where({ deleted: false }).count()
+  return res.total || 0
 }
 const getLogsCB = async () => {
-  // 只取最近 20 条，排序显示
-  const res = await getDb().collection('usage_logs').orderBy('timestamp', 'desc').limit(20).get()
+  // 保留兼容，但废弃不用
+  return []
+}
+const getOrdersCB = async (skip = 0, limit = 20) => {
+  if (!getDb()) throw new Error('CloudBase 未初始化')
+  const res = await getDb().collection('orders').orderBy('timestamp', 'desc').skip(skip).limit(limit).get()
   const openids = [...new Set(res.data.map(l => l.openid))]
-  if (openids.length === 0) return []
-  const users = await getDb().collection('app_users').where({ openid: getCmd().in(openids) }).get()
-  const userMap = {}
-  users.data.forEach(u => { userMap[u.openid] = u.nickname })
+  let userMap = {}
+  if (openids.length > 0) {
+    const users = await getDb().collection('app_users').where({ openid: getCmd().in(openids) }).get()
+    users.data.forEach(u => { userMap[u.openid] = u.nickname })
+  }
   return res.data.map(l => ({
-    id: l._id, openid: l.openid, passcodeId: l.passcodeId, passcodeName: l.passcodeName,
-    peopleCount: l.peopleCount, formattedTime: l.timestamp ? l.timestamp.slice(0, 19).replace('T', ' ') : '',
-    nickname: userMap[l.openid] || '匿名'
+    id: l._id, openid: l.openid, type: l.type || 'payment',
+    passcodeId: l.passcodeId, passcodeName: l.passcodeName,
+    pool: l.pool || l.passcodeName || '', peopleCount: l.peopleCount || 1,
+    unitPrice: l.unitPrice || 0, totalPrice: l.totalPrice || 0,
+    username: '', password: '',
+    paidAt: l.paidAt || 0, timeStr: l.timeStr || '',
+    formattedTime: l.timestamp ? l.timestamp.slice(0, 19).replace('T', ' ') : '',
+    nickname: userMap[l.openid] || '匿名', redeemed: l.redeemed || false
+  }))
+}
+const getFeedbacksCB = async (skip = 0, limit = 20) => {
+  const res = await getDb().collection('feedback').orderBy('createdAt', 'desc').skip(skip).limit(limit).get()
+  return res.data.map(f => ({
+    id: f._id,
+    openid: f.openid || '',
+    nickname: f.nickname || '匿名',
+    content: f.content || '',
+    createdAt: f.createdAt ? f.createdAt.slice(0, 19).replace('T', ' ') : ''
   }))
 }
 const getLeaderboardCB = async () => {
   const allLogs = [], batchSize = 20
   let skip = 0
   while (true) {
-    const res = await getDb().collection('usage_logs').skip(skip).limit(batchSize).get()
+    const res = await getDb().collection('orders').skip(skip).limit(batchSize).get()
     if (res.data.length === 0) break
     allLogs.push(...res.data)
     if (res.data.length < batchSize) break
@@ -292,8 +313,8 @@ const getLeaderboardCB = async () => {
   return Object.entries(stats).map(([openid, s]) => ({ openid, ...s })).sort((a, b) => b.count - a.count).slice(0, 50)
 }
 const getUserStatsCB = async (openid) => {
-  const logs = await getDb().collection('usage_logs').where({ openid }).get()
-  const checkinDates = [...new Set(logs.data.map(l => l.timestamp ? l.timestamp.slice(0, 10) : '').filter(Boolean))]
+  const res = await getDb().collection('checkins').where({ openid }).orderBy('timestamp', 'desc').limit(500).get()
+  const checkinDates = [...new Set(res.data.map(l => l.timestamp ? l.timestamp.slice(0, 10) : '').filter(Boolean))]
   let maxStreak = 0, streak = 0
   const sorted = checkinDates.sort()
   for (let i = 0; i < sorted.length; i++) {
@@ -305,11 +326,30 @@ const getUserStatsCB = async (openid) => {
   if (streak > maxStreak) maxStreak = streak
   const today = new Date().toISOString().slice(0, 10)
   const todayChecked = checkinDates.includes(today)
-  return { checkinDates, totalCount: logs.data.length, maxStreak, todayChecked, timestamps: logs.data.map(l => l.timestamp) }
+  return { checkinDates, totalCount: res.data.length, maxStreak, todayChecked, timestamps: res.data.map(l => l.timestamp) }
+}
+const getUserCheckinsCB = async (openid, skip = 0, limit = 30) => {
+  const [orderRes, checkinRes, usageRes] = await Promise.all([
+    getDb().collection('orders').where({ openid }).orderBy('timestamp', 'desc').skip(skip).limit(limit).get(),
+    getDb().collection('checkins').where({ openid }).orderBy('timestamp', 'desc').skip(skip).limit(limit).get(),
+    getDb().collection('usage_logs').where({ openid }).orderBy('timestamp', 'desc').skip(skip).limit(limit).get()
+  ])
+  const all = [...orderRes.data, ...checkinRes.data, ...usageRes.data].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+  return all.slice(0, limit).map(l => ({
+    id: l._id,
+    type: l.type || 'payment',
+    pool: l.pool || '',
+    passcodeName: l.passcodeName || '',
+    peopleCount: l.peopleCount || 1,
+    unitPrice: l.unitPrice || 0,
+    totalPrice: l.totalPrice || 0,
+    formattedTime: l.timestamp ? l.timestamp.slice(0, 19).replace('T', ' ') : ''
+  }))
 }
 const manualCheckinCB = async (openid) => {
-  await getDb().collection('usage_logs').add({ data: {
-    openid, passcodeId: 'manual', passcodeName: '手动打卡', peopleCount: 1, timestamp: new Date().toISOString()
+  if (!getDb()) throw new Error('CloudBase 未初始化')
+  await getDb().collection('checkins').add({ data: {
+    openid, type: 'manual', peopleCount: 1, timestamp: new Date().toISOString()
   }})
   return { ok: true }
 }
@@ -489,9 +529,14 @@ module.exports = {
   unbindUserCB,
   getPasscodeDetailCB,
   listUsersCB,
+  countUsersCB,
+  countPasscodesCB,
   getLogsCB,
+  getOrdersCB,
+  getFeedbacksCB,
   getLeaderboardCB,
   getUserStatsCB,
+  getUserCheckinsCB,
   manualCheckinCB,
   uploadAvatarCB,
   uploadQRCB,

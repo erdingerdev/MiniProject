@@ -386,29 +386,146 @@
 
 /* keep old cat-scroll/chip for passcode creation form */
 
-/* ── 日志 ── */
-.log-item {
+/* ── 订单 ── */
+.order-scroll {
+  width: 100%;
+}
+.order-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+.order-item:last-child { border-bottom: none; }
+.order-time {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8rpx;
+}
+.order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4rpx;
+}
+.order-user {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+.order-badge {
+  font-size: 20rpx;
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
+  background: var(--accent);
+  color: #fff;
+}
+.order-badge.badge-manual {
+  background: var(--text-dim2);
+}
+.order-pool {
+  font-size: 24rpx;
+  color: var(--accent);
+}
+.order-people {
+  font-size: 24rpx;
+  color: var(--text-dim);
+}
+.order-amount {
+  font-size: 24rpx;
+  color: var(--text-dim);
+  margin-top: 4rpx;
+}
+.order-cred {
+  font-size: 22rpx;
+  color: var(--text-dim2);
+  margin-top: 4rpx;
+  word-break: break-all;
+}
+.loading-tip {
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--text-dim2);
+  padding: 24rpx 0;
+}
+
+/* ── 搜索 ── */
+.search-row {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+.search-input {
+  flex: 1;
+}
+.search-btn {
+  width: 120rpx;
+  flex-shrink: 0;
+}
+
+/* ── 打卡记录 ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+.back-btn {
+  font-size: 28rpx;
+  color: var(--accent);
+  padding: 4rpx 8rpx;
+}
+.checkin-item {
   padding: 20rpx 0;
   border-bottom: 1rpx solid var(--border);
 }
-.log-item:last-child { border-bottom: none; }
-.log-time {
+.checkin-time {
   font-size: 22rpx;
   color: var(--text-dim2);
   margin-bottom: 6rpx;
 }
-.log-body {
+.checkin-row {
   display: flex;
-  gap: 12rpx;
+  gap: 16rpx;
   flex-wrap: wrap;
-}
-.log-user {
+  align-items: center;
   font-size: 26rpx;
   color: var(--text);
 }
-.log-code {
+.checkin-badge {
+  font-size: 20rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  background: var(--accent);
+  color: #fff;
+}
+/* ── 意见列表 ── */
+.feedback-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+.feedback-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+.feedback-user {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text);
+}
+.feedback-time {
+  font-size: 22rpx;
+  color: var(--text-dim2);
+}
+.feedback-content {
   font-size: 26rpx;
-  color: var(--accent);
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.checkin-badge.badge-manual {
+  background: var(--text-dim2);
 }
 
 /* ── 浅色模式渐变背景适配 ── */

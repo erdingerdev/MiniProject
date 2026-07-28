@@ -120,7 +120,9 @@ Page({
       })
       this.buildDays()
       this.checkPopup(stats.totalCount || 0, todayChecked, summary)
-    } catch {}
+    } catch (e) {
+      console.error('loadStats 失败:', e)
+    }
   },
 
   computeTitle(timestamps, checkinDates, totalCount) {
@@ -364,8 +366,19 @@ Page({
     this.setData({ makeupLoading: true })
     try {
       await api.manualCheckinCB(openid)
+      // 直接更新本地状态，保证即时生效
+      const today = new Date().toISOString().slice(0, 10)
+      const checkinDates = [...this.data.checkinDates]
+      if (!checkinDates.includes(today)) checkinDates.push(today)
+      this.setData({
+        todayChecked: true,
+        totalCount: this.data.totalCount + 1,
+        checkinDates,
+      })
+      this.buildDays()
       wx.showToast({ title: '打卡成功', icon: 'success' })
-      await this.loadStats()
+      // 后台刷新以同步服务端计算的 maxStreak / title
+      this.loadStats()
     } catch (e) {
       wx.showToast({ title: e.data?.error || '打卡失败', icon: 'none' })
     } finally {

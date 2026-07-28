@@ -49,6 +49,7 @@
 }
 
 .btn-submit[disabled] { opacity: 0.4; }
+.btn-submit.active { color: #fff; }
 
 .divider {
   margin: 48rpx 0 24rpx;

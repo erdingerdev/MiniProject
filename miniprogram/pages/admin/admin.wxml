@@ -17,11 +17,46 @@
       <view class="tab {{tab==='config'?'active':''}}" bindtap="switchTab" data-tab="config">配置</view>
       <view class="tab {{tab==='passcodes'?'active':''}}" bindtap="switchTab" data-tab="passcodes">通行码</view>
       <view class="tab {{tab==='users'?'active':''}}" bindtap="switchTab" data-tab="users">用户</view>
-      <view class="tab {{tab==='logs'?'active':''}}" bindtap="switchTab" data-tab="logs">日志</view>
+      <view class="tab {{tab==='logs'?'active':''}}" bindtap="switchTab" data-tab="logs">订单记录</view>
+      <view class="tab {{tab==='feedbacks'?'active':''}}" bindtap="switchTab" data-tab="feedbacks">意见列表</view>
     </view>
 
     <!-- ====== 配置 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='config'}}">
+      <!-- 新增通行码 -->
+      <view class="section">
+        <text class="section-title">新增通行码</text>
+        <input class="field" placeholder="名称" value="{{newCodeName}}" bindinput="onNewCodeName"/>
+        <view class="row">
+          <view class="chip {{newCodeType==='exclusive'?'active':''}}" bindtap="setCodeType" data-type="exclusive">单人</view>
+          <view class="chip {{newCodeType==='shared'?'active':''}}" bindtap="setCodeType" data-type="shared">多人</view>
+          <view class="chip {{newCodeType==='disposable'?'active':''}}" bindtap="setCodeType" data-type="disposable">一次性</view>
+        </view>
+        <input class="field" placeholder="用量上限(0=无限)" value="{{newCodeMax}}" bindinput="onNewCodeMax" type="number"/>
+        <picker class="field picker-field" mode="date" value="{{newCodeExpire}}" bindchange="onNewCodeExpire" end="2100-12-31">
+          <view class="picker-text">{{newCodeExpire || '过期时间(留空=永久)'}}</view>
+        </picker>
+        <text class="field-tip" wx:if="{{newCodeExpire}}" bindtap="clearExpire">点击清除过期时间</text>
+        <scroll-view class="cat-scroll" scroll-x enable-flex>
+          <view class="cat-chip {{newCodeCategory===item?'active':''}}" wx:for="{{categories}}" wx:key="*this" bindtap="selectCategory" data-cat="{{item}}">{{item}}</view>
+        </scroll-view>
+        <button class="btn-sm" bindtap="doCreateCode" disabled="{{!newCodeName}}">创建通行码</button>
+      </view>
+
+      <!-- 分类管理 -->
+      <view class="section">
+        <text class="section-title">分类管理</text>
+        <view class="cat-item" wx:for="{{categories}}" wx:key="*this" bindtap="onEditCategory" data-cat="{{item}}">
+          <view class="cat-item-body">
+            <text class="cat-item-name">{{item}}</text>
+            <text class="cat-item-creds">账号: {{categoryCreds[item].username || '未设置'}} · 密码: {{categoryCreds[item].password || '未设置'}} · ¥{{categoryCreds[item].unitPrice || '22.98'}}</text>
+          </view>
+          <text class="cat-item-arrow">›</text>
+        </view>
+        <view class="empty" wx:if="{{categories.length===0}}">暂无分类</view>
+        <button class="btn-sm" bindtap="onAddCategory" style="margin-top:16rpx">新增类型</button>
+      </view>
+
       <!-- 开放开关 -->
       <view class="section">
         <text class="section-title">获取游泳票入口</text>
@@ -40,13 +75,6 @@
         <button class="btn-sm" bindtap="pickQR">选择图片上传</button>
       </view>
 
-      <!-- 引导文案 -->
-      <view class="section">
-        <text class="section-title">获取页面引导文案（换行用 \n）</text>
-        <textarea class="field textarea-field" placeholder="引导文案" value="{{guideText}}" bindinput="onGuideText" maxlength="500"/>
-        <button class="btn-sm" bindtap="saveGuideText">保存引导文案</button>
-      </view>
-
       <!-- 管理密码 -->
       <view class="section">
         <text class="section-title">修改管理密码</text>
@@ -57,49 +85,21 @@
 
     <!-- ====== 通行码 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='passcodes'}}">
-      <!-- 分类管理 -->
-      <view class="section">
-        <text class="section-title">分类管理</text>
-        <view class="cat-item" wx:for="{{categories}}" wx:key="*this" bindtap="onEditCategory" data-cat="{{item}}">
-          <view class="cat-item-body">
-            <text class="cat-item-name">{{item}}</text>
-            <text class="cat-item-creds">账号: {{categoryCreds[item].username || '未设置'}} · 密码: {{categoryCreds[item].password || '未设置'}} · ¥{{categoryCreds[item].unitPrice || '22.98'}}</text>
-          </view>
-          <text class="cat-item-arrow">›</text>
-        </view>
-        <view class="empty" wx:if="{{categories.length===0}}">暂无分类</view>
-        <button class="btn-sm" bindtap="onAddCategory" style="margin-top:16rpx">新增类型</button>
-      </view>
-
-      <!-- 新增 -->
-      <view class="section">
-        <text class="section-title">新增通行码</text>
-        <input class="field" placeholder="名称" value="{{newCodeName}}" bindinput="onNewCodeName"/>
-        <view class="row">
-          <view class="chip {{newCodeType==='shared'?'active':''}}" bindtap="setCodeType" data-type="shared">多人</view>
-          <view class="chip {{newCodeType==='exclusive'?'active':''}}" bindtap="setCodeType" data-type="exclusive">单人</view>
-          <view class="chip {{newCodeType==='disposable'?'active':''}}" bindtap="setCodeType" data-type="disposable">一次性</view>
-        </view>
-        <input class="field" placeholder="用量上限(0=无限)" value="{{newCodeMax}}" bindinput="onNewCodeMax" type="number"/>
-        <picker class="field picker-field" mode="date" value="{{newCodeExpire}}" bindchange="onNewCodeExpire" end="2100-12-31">
-          <view class="picker-text">{{newCodeExpire || '过期时间(留空=永久)'}}</view>
-        </picker>
-        <text class="field-tip" wx:if="{{newCodeExpire}}" bindtap="clearExpire">点击清除过期时间</text>
-        <!-- 分类选择 -->
-        <scroll-view class="cat-scroll" scroll-x enable-flex>
-          <view class="cat-chip {{newCodeCategory===item?'active':''}}" wx:for="{{categories}}" wx:key="*this" bindtap="selectCategory" data-cat="{{item}}">{{item}}</view>
-        </scroll-view>
-        <button class="btn-sm" bindtap="doCreateCode" disabled="{{!newCodeName}}">创建通行码</button>
-      </view>
-
       <!-- 列表 -->
       <view class="section">
-        <text class="section-title">通行码列表</text>
+        <text class="section-title">通行码列表 ({{totalPasscodes}})</text>
+        <!-- 搜索 -->
+        <view class="search-row">
+          <input class="field search-input" placeholder="搜索通行码名称" value="{{codeSearchKey}}" bindinput="onCodeSearchInput" bindconfirm="onCodeSearchConfirm" confirm-type="search"/>
+          <button class="btn-sm search-btn" bindtap="onCodeSearchConfirm">搜索</button>
+        </view>
         <!-- 分类筛选 -->
         <scroll-view class="cat-scroll" scroll-x enable-flex style="margin-bottom:20rpx">
-          <view class="cat-chip {{codeFilterCategory==='全部'?'active':''}}" bindtap="onFilterCodeCategory" data-cat="全部">全部</view>
-          <view class="cat-chip {{codeFilterCategory===item?'active':''}}" wx:for="{{categories}}" wx:key="*this" bindtap="onFilterCodeCategory" data-cat="{{item}}">{{item}}</view>
+          <view class="cat-chip {{codeFilterCategory==='全部'?'active':''}}" catchtap="onFilterCodeCategory" data-cat="全部">全部</view>
+          <view class="cat-chip {{codeFilterCategory===item?'active':''}}" wx:for="{{categories}}" wx:key="*this" catchtap="onFilterCodeCategory" data-cat="{{item}}">{{item}}</view>
         </scroll-view>
+        <scroll-view class="order-scroll" scroll-y="true" style="height: calc(100vh - 420rpx)"
+            bindscrolltolower="onPasscodeScrollToLower" lower-threshold="100">
         <view class="code-item" wx:for="{{passcodes}}" wx:key="id" wx:if="{{codeFilterCategory==='全部' || item.category===codeFilterCategory}}">
           <view class="code-info" bindtap="toggleCodeDetail" data-id="{{item.id}}">
             <view class="code-name-row">
@@ -133,39 +133,100 @@
           </view>
         </view>
         <view class="empty" wx:if="{{passcodes.length===0}}">还没有通行码</view>
+        <view class="loading-tip" wx:if="{{passcodesLoading}}">加载中...</view>
+        <view class="loading-tip" wx:elif="{{!passcodesHasMore && passcodes.length > 0}}">没有更多了</view>
+        </scroll-view>
       </view>
     </view>
 
     <!-- ====== 用户 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='users'}}">
-      <view class="section">
-        <text class="section-title">用户列表 ({{users.length}})</text>
-        <view class="user-item" wx:for="{{users}}" wx:key="openid">
-          <image class="u-avatar" src="{{item.avatar}}" mode="aspectFill" wx:if="{{item.avatar}}"/>
-          <view class="u-avatar u-avatar-empty" wx:else></view>
-          <view class="u-info">
-            <text class="u-name">{{item.nickname||'匿名'}}</text>
-            <text class="u-stats">绑定: {{item.boundPasscodeName||'无'}} · 总{{item.totalCount}}人次 · 近7天{{item.recent7Days}}人次</text>
-            <text class="u-stats">最近: {{item.lastUsed||'无记录'}}</text>
+      <!-- 用户列表 -->
+      <block wx:if="{{!checkinUser}}">
+        <scroll-view class="order-scroll" scroll-y="true" style="height: calc(100vh - 240rpx)"
+            bindscrolltolower="onUserScrollToLower" lower-threshold="100">
+          <view class="section">
+            <text class="section-title">用户列表 ({{totalUsers}})</text>
+            <view class="user-item" wx:for="{{users}}" wx:key="openid" bindtap="showUserCheckins" data-openid="{{item.openid}}" data-nickname="{{item.nickname}}">
+              <image class="u-avatar" src="{{item.avatar}}" mode="aspectFill" wx:if="{{item.avatar}}"/>
+              <view class="u-avatar u-avatar-empty" wx:else></view>
+              <view class="u-info">
+                <text class="u-name">{{item.nickname||'匿名'}}</text>
+                <text class="u-stats">绑定: {{item.boundPasscodeName||'无'}} · 总{{item.totalCount}}人次</text>
+              </view>
+            </view>
+            <view class="empty" wx:if="{{users.length===0}}">还没有用户</view>
+            <view class="loading-tip" wx:if="{{usersLoading}}">加载中...</view>
+            <view class="loading-tip" wx:elif="{{!usersHasMore && users.length > 0}}">没有更多了</view>
           </view>
+        </scroll-view>
+      </block>
+      <!-- 打卡记录 -->
+      <block wx:else>
+        <view class="section">
+          <view class="section-header">
+            <text class="back-btn" bindtap="backToUsers">← 返回</text>
+            <text class="section-title">{{checkinNickname}} 的打卡记录</text>
+          </view>
+          <scroll-view class="order-scroll" scroll-y="true" style="height: calc(100vh - 240rpx)"
+              bindscrolltolower="onCheckinScrollToLower" lower-threshold="100">
+            <view class="checkin-item" wx:for="{{checkins}}" wx:key="id">
+              <view class="checkin-time">{{item.formattedTime}}</view>
+              <view class="checkin-row">
+                <text class="checkin-badge {{item.type==='manual' ? 'badge-manual' : ''}}">{{item.type==='manual' ? '补卡' : '支付'}}</text>
+                <text wx:if="{{item.pool}}">{{item.pool}}</text>
+                <text wx:if="{{item.passcodeName}}">「{{item.passcodeName}}」</text>
+                <text>{{item.peopleCount}}人</text>
+                <text wx:if="{{item.totalPrice}}">¥{{item.totalPrice}}</text>
+              </view>
+            </view>
+            <view class="empty" wx:if="{{checkins.length===0}}">暂无打卡记录</view>
+            <view class="loading-tip" wx:if="{{checkinsLoading}}">加载中...</view>
+            <view class="loading-tip" wx:elif="{{!checkinsHasMore && checkins.length > 0}}">没有更多了</view>
+          </scroll-view>
         </view>
-        <view class="empty" wx:if="{{users.length===0}}">还没有用户</view>
-      </view>
+      </block>
     </view>
 
-    <!-- ====== 日志 Tab ====== -->
+    <!-- ====== 订单 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='logs'}}">
-      <view class="section">
-        <text class="section-title">使用日志 (最近 20 条)</text>
-        <view class="log-item" wx:for="{{logs}}" wx:key="id">
-          <view class="log-time">{{item.formattedTime}}</view>
-          <view class="log-body">
-            <text class="log-user">{{item.nickname||'匿名'}}</text>
-            <text class="log-code">使用「{{item.passcodeName}}」· {{item.peopleCount}}人</text>
+      <scroll-view class="order-scroll" scroll-y="true" style="height: calc(100vh - 200rpx)"
+          bindscrolltolower="onOrderScrollToLower" lower-threshold="100">
+        <view class="order-item" wx:for="{{orders}}" wx:key="id">
+          <view class="order-time">{{item.formattedTime}}</view>
+          <view class="order-row">
+            <text class="order-user">{{item.nickname||'匿名'}}</text>
+            <text class="order-badge {{item.type==='manual' ? 'badge-manual' : ''}}">{{item.type==='manual' ? '补卡' : '支付'}}</text>
           </view>
+          <view class="order-row">
+            <text class="order-pool">{{item.pool||item.passcodeName}}</text>
+            <text class="order-code-name">「{{item.passcodeName}}」</text>
+            <text class="order-people">{{item.peopleCount}}人</text>
+          </view>
+          <view class="order-amount" wx:if="{{item.totalPrice}}">¥{{item.totalPrice}} ({{item.unitPrice}}×{{item.peopleCount}})</view>
+          <view class="order-cred" wx:if="{{item.username}}">账号: {{item.username}} / 密码: {{item.password}}</view>
         </view>
-        <view class="empty" wx:if="{{logs.length===0}}">暂无日志</view>
-      </view>
+        <view class="empty" wx:if="{{orders.length===0}}">暂无订单</view>
+        <view class="loading-tip" wx:if="{{ordersLoading}}">加载中...</view>
+        <view class="loading-tip" wx:elif="{{!ordersHasMore && orders.length > 0}}">没有更多了</view>
+      </scroll-view>
+    </view>
+
+    <!-- ====== 意见列表 Tab ====== -->
+    <view class="tab-content" wx:if="{{tab==='feedbacks'}}">
+      <scroll-view class="order-scroll" scroll-y="true" style="height: calc(100vh - 200rpx)"
+          bindscrolltolower="onFeedbackScrollToLower" lower-threshold="100">
+        <view class="feedback-item" wx:for="{{feedbacks}}" wx:key="id">
+          <view class="feedback-row">
+            <text class="feedback-user">{{item.nickname||'匿名'}}</text>
+            <text class="feedback-time">{{item.createdAt}}</text>
+          </view>
+          <text class="feedback-content">{{item.content}}</text>
+        </view>
+        <view class="empty" wx:if="{{feedbacks.length===0}}">暂无意见</view>
+        <view class="loading-tip" wx:if="{{feedbacksLoading}}">加载中...</view>
+        <view class="loading-tip" wx:elif="{{!feedbacksHasMore && feedbacks.length > 0}}">没有更多了</view>
+      </scroll-view>
     </view>
   </block>
 </view>

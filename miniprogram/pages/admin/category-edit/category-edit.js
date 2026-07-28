@@ -61,9 +61,8 @@ Page({
       }
       wx.showLoading({ title: '保存中...' })
       try {
-        await api.saveCategoriesCB([...categories, name])
-        await api.setCategoryCredentialsCB(name, this.data.username, this.data.password)
-        await api.setCategoryUnitPriceCB(name, parseFloat(this.data.unitPrice) || 22.98)
+        await wx.cloud.callFunction({ name: 'adminUpdateConfig', data: { action: 'saveCategories', data: { categories: [...categories, name] } } })
+        await wx.cloud.callFunction({ name: 'adminUpdateConfig', data: { action: 'setCategoryCreds', data: { category: name, username: this.data.username, password: this.data.password, unitPrice: parseFloat(this.data.unitPrice) || 22.98 } } })
         wx.hideLoading()
         wx.showToast({ title: '已创建', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 800)
@@ -80,9 +79,8 @@ Page({
       wx.showLoading({ title: '保存中...' })
       try {
         const newCats = categories.map(c => c === oldName ? name : c)
-        await api.saveCategoriesCB(newCats)
-        await api.setCategoryCredentialsCB(name, this.data.username, this.data.password)
-        await api.setCategoryUnitPriceCB(name, parseFloat(this.data.unitPrice) || 22.98)
+        await wx.cloud.callFunction({ name: 'adminUpdateConfig', data: { action: 'saveCategories', data: { categories: newCats } } })
+        await wx.cloud.callFunction({ name: 'adminUpdateConfig', data: { action: 'setCategoryCreds', data: { category: name, username: this.data.username, password: this.data.password, unitPrice: parseFloat(this.data.unitPrice) || 22.98 } } })
         wx.hideLoading()
         wx.showToast({ title: '已保存', icon: 'success' })
         setTimeout(() => wx.navigateBack(), 800)
@@ -106,7 +104,7 @@ Page({
 
     wx.showLoading({ title: '删除中...' })
     try {
-      await api.saveCategoriesCB(newCats)
+      await wx.cloud.callFunction({ name: 'adminUpdateConfig', data: { action: 'saveCategories', data: { categories: newCats } } })
       wx.hideLoading()
       wx.showToast({ title: '已删除', icon: 'success' })
       setTimeout(() => wx.navigateBack(), 800)

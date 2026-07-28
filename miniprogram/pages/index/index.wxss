@@ -82,6 +82,556 @@
   100% { transform: translate(-6rpx, -10rpx); }
 }
 
+/* ── 时段提示弹窗 ── */
+.timetip-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: timetip-in 0.3s ease-out forwards;
+}
+.timetip-overlay.out {
+  animation: timetip-out 0.25s ease-in forwards;
+}
+@keyframes timetip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes timetip-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.timetip-card {
+  position: relative;
+  background: linear-gradient(160deg, #0a1628 0%, #0f1f38 100%);
+  border: 2rpx solid rgba(6, 182, 212, 0.6);
+  border-radius: 16rpx;
+  padding: 48rpx 56rpx;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: 0 0 40rpx rgba(6, 182, 212, 0.4), 0 0 80rpx rgba(6, 182, 212, 0.2), inset 0 0 40rpx rgba(6, 182, 212, 0.08);
+}
+.timetip-noise {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 3rpx, rgba(6, 182, 212, 0.3) 3rpx, rgba(6, 182, 212, 0.3) 4rpx,
+    transparent 4rpx, transparent 12rpx
+  );
+  animation: noise-flicker 0.12s steps(3) infinite;
+  pointer-events: none;
+}
+@keyframes noise-flicker {
+  0% { opacity: 0.03; transform: translateY(0); }
+  33% { opacity: 0.12; transform: translateY(-2rpx); }
+  66% { opacity: 0.05; transform: translateY(3rpx); }
+  100% { opacity: 0.08; transform: translateY(-1rpx); }
+}
+.timetip-scanline {
+  position: absolute;
+  height: 3rpx;
+  background: linear-gradient(90deg, transparent 3%, rgba(6, 182, 212, 0.5) 20%, rgba(200, 240, 255, 0.9) 50%, rgba(6, 182, 212, 0.5) 80%, transparent 97%);
+  pointer-events: none;
+  box-shadow: 0 0 8rpx rgba(6, 182, 212, 0.5);
+}
+.timetip-scanline.s1 { left: 8%; width: 55%; animation: glitch-line-1 1.6s steps(8) infinite; }
+.timetip-scanline.s2 { left: 35%; width: 45%; animation: glitch-line-2 2.1s steps(8) infinite; }
+.timetip-scanline.s3 { left: 5%; width: 70%; animation: glitch-line-3 1.8s steps(8) infinite; }
+@keyframes glitch-line-1 {
+  0%, 14% { top: 20%; opacity: 0; }
+  16% { top: 20%; opacity: 1; }
+  18% { top: 22%; opacity: 0.6; }
+  19% { top: 22%; opacity: 0; }
+  44% { top: 65%; opacity: 0; }
+  46% { top: 65%; opacity: 1; }
+  47% { top: 63%; opacity: 0.8; }
+  48% { top: 67%; opacity: 0; }
+  72% { top: 38%; opacity: 0; }
+  74% { top: 38%; opacity: 0.9; }
+  76% { top: 40%; opacity: 0; }
+  90% { top: 85%; opacity: 0; }
+  92% { top: 85%; opacity: 1; }
+  93% { top: 83%; opacity: 0.5; }
+  94% { top: 87%; opacity: 0; }
+  100% { top: 85%; opacity: 0; }
+}
+@keyframes glitch-line-2 {
+  0%, 24% { top: 45%; opacity: 0; }
+  26% { top: 45%; opacity: 0.9; }
+  27% { top: 48%; opacity: 0.7; }
+  28% { top: 43%; opacity: 0; }
+  54% { top: 12%; opacity: 0; }
+  56% { top: 12%; opacity: 1; }
+  58% { top: 14%; opacity: 0; }
+  78% { top: 75%; opacity: 0; }
+  80% { top: 75%; opacity: 0.8; }
+  82% { top: 73%; opacity: 0; }
+  94% { top: 30%; opacity: 0; }
+  96% { top: 30%; opacity: 1; }
+  97% { top: 32%; opacity: 0.5; }
+  98% { top: 28%; opacity: 0; }
+  100% { top: 30%; opacity: 0; }
+}
+@keyframes glitch-line-3 {
+  0%, 32% { top: 55%; opacity: 0; }
+  34% { top: 55%; opacity: 1; }
+  35% { top: 58%; opacity: 0.6; }
+  36% { top: 52%; opacity: 0; }
+  62% { top: 18%; opacity: 0; }
+  64% { top: 18%; opacity: 0.85; }
+  66% { top: 20%; opacity: 0; }
+  84% { top: 70%; opacity: 0; }
+  86% { top: 70%; opacity: 1; }
+  87% { top: 68%; opacity: 0.7; }
+  88% { top: 72%; opacity: 0; }
+  96% { top: 48%; opacity: 0; }
+  98% { top: 48%; opacity: 0.9; }
+  99% { top: 50%; opacity: 0; }
+  100% { top: 48%; opacity: 0; }
+}
+.timetip-text {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #06b6d4;
+  line-height: 1.8;
+  white-space: pre-line;
+  text-shadow: 0 0 20rpx rgba(6, 182, 212, 0.3);
+  letter-spacing: 2rpx;
+}
+
+/* ── 联系国哥二维码弹窗 ── */
+.qr-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qr-modal-card {
+  background: #1a1a2e;
+  border-radius: 24rpx;
+  padding: 40rpx;
+  text-align: center;
+  width: 500rpx;
+}
+.qr-modal-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+  display: block;
+  margin-bottom: 32rpx;
+}
+.qr-modal-img {
+  width: 100%;
+  border-radius: 12rpx;
+}
+
+/* ── 出票动画 ── */
+/* 遮罩背景（独立，淡出不影子女） */
+.ticket-overlay-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 500;
+  background: rgba(0,0,0,0.5);
+  opacity: 1;
+}
+.ticket-overlay-bg.overlay-fading {
+  opacity: 0;
+  transition: opacity 0.6s ease-in;
+}
+
+/* 出票口裁剪 */
+.ticket-slot {
+  position: fixed;
+  top: calc(50% - 180rpx);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 560rpx;
+  height: 360rpx;
+  overflow: hidden;
+  z-index: 501;
+}
+
+.ticket-card {
+  width: 560rpx;
+  background: linear-gradient(160deg, #6b4e3d 0%, #5a4fa0 25%, #3a3a52 50%, #2d5a65 75%, #059699 100%);
+  border-radius: 32rpx;
+  padding: 32rpx 48rpx;
+  text-align: left;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+/* 虚线撕口 */
+.ticket-rip {
+  position: absolute;
+  left: 160rpx;
+  top: 20rpx;
+  bottom: 20rpx;
+  width: 0;
+  border-left: 2rpx dashed rgba(255,255,255,0.2);
+}
+	/* 虚线两端半圆齿孔 */
+.ticket-card::before {
+  content: '';
+  position: absolute;
+	  left: calc(160rpx - 16rpx);
+	  top: -16rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+	  background: rgba(0,0,0,0.6);
+
+}
+.ticket-card::after {
+  content: '';
+  position: absolute;
+	  left: calc(160rpx - 16rpx);
+	  bottom: -16rpx;
+  width: 32rpx;
+  height: 32rpx;
+	  background: rgba(0,0,0,0.6);
+  border-radius: 50%;
+
+}
+/* 票号 */
+.ticket-card .ticket-no {
+  font-size: 20rpx;
+  color: #999;
+  text-align: right;
+  margin-bottom: 16rpx;
+}
+
+.ticket-pool {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 32rpx;
+  display: block;
+}
+
+.ticket-cred {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 0;
+}
+.ticket-label {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #fff;
+}
+.ticket-value {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #fff;
+  font-family: monospace;
+}
+
+.ticket-card.print {
+  animation: ticket-print 1.2s ease-out forwards;
+}
+
+@keyframes ticket-print {
+  0% { transform: translateY(-100%); opacity: 0; }
+  20% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* 收缩阶段：允许卡片飞出裁剪区 */
+.ticket-slot.slot-shrink {
+  overflow: visible;
+}
+
+/* 收缩动画：缩小并飞向票根位置 */
+.ticket-card.shrink {
+  animation: ticket-shrink 1s ease-in forwards;
+}
+
+@keyframes ticket-shrink {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(300rpx, 520rpx) scale(0.18);
+    opacity: 1;
+  }
+}
+
+.ticket-pool {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 32rpx;
+  display: block;
+}
+
+.ticket-label {
+  font-size: 36rpx;
+  color: rgba(255,255,255,0.5);
+}
+.ticket-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #fff;
+  font-family: monospace;
+}
+
+/* ── 票根按钮（虚线左侧存根样式）── */
+.ticket-stub {
+  position: fixed;
+  right: 0;
+  bottom: calc(180rpx + env(safe-area-inset-bottom));
+  width: 100rpx;
+  height: 100rpx;
+  background: linear-gradient(160deg, #6b4e3d 0%, #5a4fa0 60%, #3a3a52 100%);
+  border-radius: 12rpx 0 0 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.35);
+  /* 右边虚线撕口 */
+  border-right: 2rpx dashed rgba(255,255,255,0.3);
+}
+/* 虚线两端半圆齿孔 */
+.ticket-stub::before {
+  content: '';
+  position: absolute;
+  right: -12rpx;
+  top: -8rpx;
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.ticket-stub::after {
+  content: '';
+  position: absolute;
+  right: -12rpx;
+  bottom: -8rpx;
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.stub-count {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ── 核销输入弹窗 ── */
+.redeem-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.redeem-card {
+  background: #1a1a2e;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  width: 520rpx;
+}
+.redeem-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  display: block;
+  margin-bottom: 32rpx;
+}
+.redeem-input {
+  background: rgba(255,255,255,0.1);
+  border: 1rpx solid rgba(255,255,255,0.15);
+  border-radius: 12rpx;
+  color: #fff;
+  font-size: 28rpx;
+  padding: 16rpx 24rpx;
+  margin-bottom: 32rpx;
+  text-align: center;
+}
+.redeem-buttons {
+  display: flex;
+  gap: 20rpx;
+}
+.redeem-btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.redeem-btn.cancel {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+}
+.redeem-btn.confirm {
+  background: linear-gradient(135deg, var(--accent), #3b82f6);
+  color: #fff;
+}
+.redeem-btn.confirm[disabled] {
+  opacity: 0.4;
+}
+
+/* ── 票列表弹窗 ── */
+.ticket-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 600;
+}
+.ticket-modal-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  animation: modal-bg-in 0.3s ease-out;
+}
+@keyframes modal-bg-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* 关闭时背景淡出 */
+.ticket-modal.closing .ticket-modal-bg {
+  animation: modal-bg-out 0.35s ease-in forwards;
+}
+@keyframes modal-bg-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.ticket-modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 560rpx;
+  max-height: 80vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ticket-modal-content::-webkit-scrollbar {
+  display: none;
+}
+
+.ticket-modal-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  display: block;
+  margin-bottom: 32rpx;
+}
+
+.ticket-card-full {
+  background: linear-gradient(160deg, #6b4e3d 0%, #5a4fa0 25%, #3a3a52 50%, #2d5a65 75%, #059699 100%);
+  border-radius: 32rpx;
+  padding: 32rpx 48rpx;
+  margin-bottom: 24rpx;
+  text-align: left;
+  position: relative;
+  animation: ticket-item-in 0.4s ease-out backwards;
+}
+@keyframes ticket-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(80rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* 核销时 item 右滑淡出 */
+.ticket-card-full.removing {
+  animation: ticket-item-redeem 0.35s ease-in forwards !important;
+}
+@keyframes ticket-item-redeem {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(120rpx);
+  }
+}
+
+/* 关闭时 item 下落淡出 */
+.ticket-modal.closing .ticket-card-full {
+  animation: ticket-item-out 0.3s ease-in forwards !important;
+}
+@keyframes ticket-item-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(60rpx);
+  }
+}
+.ticket-card-full::before {
+  content: '';
+  position: absolute;
+  left: -22rpx;
+  top: 50%;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: var(--modal-bg);
+  transform: translateY(-50%);
+}
+.ticket-card-full::after {
+  content: '';
+  position: absolute;
+  right: -22rpx;
+  top: 50%;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: var(--modal-bg);
+  transform: translateY(-50%);
+}
+.ticket-card-full .ticket-pool { font-size: 36rpx; }
+.ticket-time {
+  font-size: 22rpx;
+  color: var(--text-dim);
+  margin-top: 16rpx;
+}
+.ticket-redeem {
+  margin-top: 20rpx;
+  padding: 18rpx 12rpx;
+  background: linear-gradient(135deg, var(--accent), #3b82f6);
+  color: #fff;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-align: center;
+}
+.ticket-modal-close {
+  text-align: center;
+  font-size: 28rpx;
+  color: var(--text-dim);
+  padding: 24rpx;
+}
+
 /* ── 用户栏 ── */
 .user-bar {
   position: relative;
@@ -290,12 +840,6 @@
   display: block;
   text-align: center;
 }
-.feedback-link {
-  margin-top: 12rpx;
-  color: var(--accent) !important;
-  letter-spacing: 2rpx !important;
-}
-
 /* ── 日/夜间切换按钮 ── */
 .theme-toggle {
   position: absolute;
@@ -305,7 +849,7 @@
   width: 200rpx;
   height: 76rpx;
   border-radius: 76rpx;
-  z-index: 100;
+  z-index: 500;
   --dark: 0;
   /* 日间天蓝 #5a81b4 → 夜间深蓝 #2b303e */
   background: hsl(204, calc(53% - var(--dark) * 28%), calc(47% - var(--dark) * 31%));

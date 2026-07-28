@@ -67,17 +67,6 @@
     <button class="btn-primary" bindtap="confirmPeople">确认支付 {{totalPrice}} 元</button>
   </view>
 
-  <!-- 状态: 展示收款码 -->
-  <view class="center-box" wx:elif="{{status === 'showQR'}}">
-    <text class="guide" wx:for="{{guideLines}}" wx:key="index">{{item}}</text>
-    <image class="qr-img" src="{{qrUrl}}" mode="widthFix" show-menu-by-longpress="{{true}}" wx:if="{{qrUrl}}"/>
-    <view class="qr-placeholder" wx:else>
-      <text>收款码尚未上传</text>
-    </view>
-    <text class="hint hint-pay">先转账，再使用，合作愉快</text>
-    <button class="btn-primary" bindtap="confirmPayment" wx:if="{{showPayButton}}">我已付款 {{totalPrice}} 元</button>
-  </view>
-
   <!-- 状态: 展示账号密码 -->
   <view class="center-box" wx:elif="{{status === 'showCredentials'}}">
     <text class="guide green">确认支付后，使用以下信息入场</text>
@@ -133,4 +122,14 @@
     </view>
   </view>
 
+  <!-- 时段提示弹窗 -->
+  <view class="timetip-overlay {{timeTipOut ? 'out' : ''}}" wx:if="{{timeTipVisible}}" bindtap="hideTimeTip">
+    <view class="timetip-card" catchtap="noop">
+      <view class="timetip-noise"></view>
+      <view class="timetip-scanline s1"></view>
+      <view class="timetip-scanline s2"></view>
+      <view class="timetip-scanline s3"></view>
+      <text class="timetip-text">{{timeTipText}}</text>
+    </view>
+  </view>
 </view>

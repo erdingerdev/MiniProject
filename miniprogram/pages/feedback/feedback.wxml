@@ -3,18 +3,6 @@
     <text class="label">说说你想要什么功能</text>
     <textarea class="textarea" placeholder="比如：想要每周排行榜、泳姿教学视频..." value="{{content}}" bindinput="onInput" maxlength="500"/>
     <text class="count">{{content.length}}/500</text>
-    <button class="btn-submit" bindtap="doSubmit" disabled="{{!content.trim()}}">提交反馈</button>
-
-    <view class="divider" wx:if="{{list.length > 0}}">
-      <text class="divider-text">大家的建议</text>
-    </view>
-
-    <view class="item" wx:for="{{list}}" wx:key="_id">
-      <view class="item-head">
-        <text class="item-user">{{item.nickname || '匿名'}}</text>
-        <text class="item-time">{{item.createdAt}}</text>
-      </view>
-      <text class="item-text">{{item.content}}</text>
-    </view>
+    <button class="btn-submit {{content.length > 0 ? 'active' : ''}}" bindtap="doSubmit" disabled="{{content.length === 0}}">提交反馈</button>
   </view>
 </view>

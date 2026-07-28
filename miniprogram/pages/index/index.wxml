@@ -27,7 +27,7 @@
       <text class="user-name">{{nickname || '未登录'}}</text>
     </view>
     <!-- 日/夜间切换按钮 -->
-    <view class="theme-toggle {{theme === 'dark' ? 'is-light' : ''}}" bindtap="onToggleTheme">
+    <view class="theme-toggle {{theme === 'dark' ? 'is-light' : ''}}" bindtap="onToggleTheme" wx:if="{{false}}">
       <view class="toggle-circle">
         <view class="toggle-sun">
           <view class="toggle-moon">
@@ -46,7 +46,7 @@
   </view>
   <!-- 状态和提醒（独立于 user-bar，不挤占头像位置） -->
   <view class="user-status" wx:if="{{passcodeStatusText || inactiveDays > 1}}">
-    <view class="status-row" wx:if="{{passcodeStatusText}}">
+    <view class="status-row" wx:if="{{false}}">
       <view class="status-dot" style="background: {{passcodeStatusColor}}"></view>
       <text class="passcode-status">{{passcodeStatusText}}</text>
     </view>
@@ -55,7 +55,7 @@
 
   <!-- 标题 -->
   <view class="hero">
-    <text class="hero-title">得闲意</text>
+    <text class="hero-title" bindtap="onToggleTheme" bindlongpress="onTitleLongPress">得闲意</text>
     <text class="hero-sub">行到水穷处，坐看云起时</text>
   </view>
 
@@ -65,7 +65,6 @@
       <view class="card-icon">🏊</view>
       <text class="card-title">获取游泳票</text>
       <text class="card-desc">通行码验证 · 获取入场凭证</text>
-      <view class="card-clock {{theme === 'light' ? 'cc-light' : ''}}">{{clockTime}}</view>
     </view>
     <view class="card-row" style="animation-delay: 0.3s">
       <view class="card card-half" bindtap="goMine">
@@ -73,17 +72,102 @@
         <text class="card-title">我的</text>
         <text class="card-desc">打卡记录 · 游泳统计</text>
       </view>
-      <view class="card card-half" style="animation-delay: 0.4s" bindtap="goAdmin">
-        <view class="card-icon">⚙️</view>
-        <text class="card-title">后台管理</text>
-        <text class="card-desc">配置管理 · 数据统计</text>
+      <view class="card card-half" style="animation-delay: 0.4s" bindtap="showContactQR">
+        <view class="card-icon">🔳</view>
+        <text class="card-title">联系国哥</text>
+        <text class="card-desc">有问题 · 找国哥</text>
+      </view>
+    </view>
+    <view class="card-row" style="animation-delay: 0.5s">
+      <view class="card card-half" bindtap="goFeedback">
+        <view class="card-icon">💬</view>
+        <text class="card-title">意见反馈</text>
+        <text class="card-desc">建议 · 吐槽 · 报 Bug</text>
       </view>
     </view>
   </view>
 
   <view class="footer">
     <text>得闲时 · 意自在</text>
-    <text class="feedback-link" bindtap="goFeedback">💬 意见反馈</text>
+  </view>
+
+  <!-- 出票动画：遮罩背景与票据分离，背景淡出不影响票据 -->
+  <block wx:if="{{showTicketAnim}}">
+    <view class="ticket-overlay-bg {{ticketAnimPhase === 'shrink' ? 'overlay-fading' : ''}}"></view>
+    <!-- 出票口：裁剪区域，票从上方滑入；收缩阶段允许飞出 -->
+    <view class="ticket-slot {{ticketAnimPhase === 'shrink' ? 'slot-shrink' : ''}}">
+      <view class="ticket-card {{ticketAnimPhase}}">
+        <view class="ticket-rip"></view>
+        <view class="ticket-cred">
+          <text class="ticket-label">账号</text>
+          <text class="ticket-value">{{animTicket.username}}</text>
+        </view>
+        <view class="ticket-cred">
+          <text class="ticket-label">密码</text>
+          <text class="ticket-value">{{animTicket.password}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 时段提示弹窗 -->
+  <view class="timetip-overlay {{timeTipOut ? 'out' : ''}}" wx:if="{{timeTipVisible}}" bindtap="hideTimeTip">
+    <view class="timetip-card" catchtap="noop">
+      <view class="timetip-noise"></view>
+      <view class="timetip-scanline s1"></view>
+      <view class="timetip-scanline s2"></view>
+      <view class="timetip-scanline s3"></view>
+      <text class="timetip-text">{{timeTipText}}</text>
+    </view>
+  </view>
+
+  <!-- 联系国哥二维码弹窗 -->
+  <view class="qr-modal" wx:if="{{showQRModal}}" bindtap="hideContactQR">
+    <view class="qr-modal-card" catchtap="noop">
+      <text class="qr-modal-title">长按联系国哥</text>
+      <image class="qr-modal-img" src="{{contactQRUrl}}" mode="widthFix" show-menu-by-longpress="{{true}}" wx:if="{{contactQRUrl}}"/>
+      <view class="qr-placeholder" wx:else>加载中...</view>
+    </view>
+  </view>
+
+  <!-- 票根按钮 -->
+  <view class="ticket-stub" wx:if="{{tickets.length > 0}}" bindtap="showTickets">
+    <text class="stub-count">{{tickets.length}}</text>
+  </view>
+
+  <!-- 核销输入弹窗 -->
+  <view class="redeem-modal" wx:if="{{showRedeemInput}}" bindtap="cancelRedeem">
+    <view class="redeem-card" catchtap="noop">
+      <text class="redeem-title">填写剩余次数</text>
+      <input class="redeem-input" type="number" placeholder="剩余游泳次数" value="{{redeemRemainCount}}" bindinput="onRedeemRemainInput" focus/>
+      <view class="redeem-buttons">
+        <button class="redeem-btn cancel" bindtap="cancelRedeem">取消</button>
+        <button class="redeem-btn confirm" bindtap="confirmRedeem" disabled="{{!redeemRemainCount}}">确认</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 票列表弹窗 -->
+  <view class="ticket-modal {{ticketListClosing ? 'closing' : ''}}" wx:if="{{showTicketList || ticketListClosing}}">
+    <view class="ticket-modal-bg" catchtap="closeTicketList"></view>
+    <view class="ticket-modal-content">
+      <view class="ticket-card-full {{removingId === item.paidAt ? 'removing' : ''}}" wx:for="{{tickets}}" wx:key="paidAt" style="animation-delay: {{index * 0.08}}s">
+        <view class="ticket-cred">
+          <text class="ticket-label">账号</text>
+          <text class="ticket-value" selectable>{{item.username}}</text>
+        </view>
+        <view class="ticket-cred">
+          <text class="ticket-label">密码</text>
+          <text class="ticket-value" selectable>{{item.password}}</text>
+        </view>
+        <view class="ticket-cred">
+          <text class="ticket-label">人数</text>
+          <text class="ticket-value">{{item.peopleCount}}人</text>
+        </view>
+        <view class="ticket-time">{{item.timeStr}}</view>
+        <view class="ticket-redeem" bindtap="redeemTicket" data-id="{{item.paidAt}}">我已核销</view>
+      </view>
+    </view>
   </view>
 
 </view>

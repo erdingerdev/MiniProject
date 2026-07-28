@@ -4,7 +4,6 @@ const db = wx.cloud ? wx.cloud.database() : null
 Page({
   data: {
     content: '',
-    list: [],
     theme: 'dark'
   },
 
@@ -15,7 +14,6 @@ Page({
       frontColor: theme === 'dark' ? '#ffffff' : '#000000',
       backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
     })
-    this.loadList()
   },
 
   onShow() {
@@ -25,19 +23,6 @@ Page({
 
   onInput(e) {
     this.setData({ content: e.detail.value })
-  },
-
-  async loadList() {
-    if (!db) return
-    try {
-      const res = await db.collection('feedback').orderBy('createdAt', 'desc').limit(50).get()
-      this.setData({ list: res.data.map(f => ({
-        ...f,
-        createdAt: f.createdAt ? f.createdAt.slice(0, 16).replace('T', ' ') : ''
-      })) })
-    } catch (e) {
-      // collection may not exist yet
-    }
   },
 
   async doSubmit() {
@@ -55,8 +40,7 @@ Page({
       }})
       wx.hideLoading()
       wx.showToast({ title: '感谢反馈！', icon: 'success' })
-      this.setData({ content: '' })
-      this.loadList()
+      setTimeout(() => wx.navigateBack(), 1000)
     } catch {
       wx.hideLoading()
       wx.showToast({ title: '提交失败', icon: 'none' })

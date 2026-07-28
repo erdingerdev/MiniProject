@@ -1,29 +1,39 @@
 const app = getApp()
 const api = require('../../utils/api')
 
+function formatTime(d) {
+  const y = d.getFullYear()
+  const m = d.getMonth() + 1
+  const day = d.getDate()
+  const h = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  const s = String(d.getSeconds()).padStart(2, '0')
+  return `${y}/${m}/${day} ${h}:${min}:${s}`
+}
+
 Page({
   data: {
     status: 'loading',
     codeName: '',
     errorMsg: '',
-    qrUrl: '',
     passcodeId: '',
     passcodeName: '',
     passcodeCategory: '',
     credentials: { username: '', password: '' },
     tempAvatar: '',
     tempNickname: '',
-    guideLines: [],
     peopleCount: 1,
     unitPrice: '22.98',
     totalPrice: '22.98',
-    showPayButton: false,
     passcodes: [],
     selectedPasscodeId: '',
     showPoolPicker: false,
     showBindDialog: false,
     theme: 'dark',
-    newBindCodeName: ''
+    newBindCodeName: '',
+    timeTipVisible: false,
+    timeTipOut: false,
+    timeTipText: ''
   },
 
   onLoad(options) {
@@ -45,9 +55,6 @@ Page({
     })
     if (['loading', 'needLogin', 'needPasscode', 'needProfile'].includes(this.data.status)) {
       await this.initFlow()
-    }
-    if (this.data.status === 'showQR' && !this.data.showPayButton) {
-      this.setData({ showPayButton: true })
     }
   },
 
@@ -91,6 +98,7 @@ Page({
         const price = String(selected.unitPrice)
         const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
         this.setData({
+          _realUnitPrice: price,
           passcodes: st.passcodes,
           selectedPasscodeId: selected.id,
           passcodeId: selected.id,
@@ -100,7 +108,7 @@ Page({
           totalPrice: total,
           status: 'choosePeople'
         })
-        this.loadConfig()
+
       } else {
         this.setData({ status: 'needPasscode' })
       }
@@ -207,11 +215,11 @@ Page({
           passcodeId: selected.id,
           passcodeName: selected.name,
           passcodeCategory: selected.category,
-          unitPrice: price,
+          _realUnitPrice: price, unitPrice: price,
           totalPrice: total,
           status: 'choosePeople'
         })
-        this.loadConfig()
+
         return
       }
     } catch {}
@@ -245,19 +253,19 @@ Page({
           passcodeId: selected.id,
           passcodeName: selected.name,
           passcodeCategory: selected.category,
-          unitPrice: price,
+          _realUnitPrice: price, unitPrice: price,
           totalPrice: total,
           status: 'choosePeople',
           codeName: '',
           errorMsg: ''
         })
-        this.loadConfig()
+
       } else {
         this.setData({
           passcodeId: res.passcodeId, passcodeName: res.passcodeName, passcodeCategory: res.passcodeCategory,
           status: 'choosePeople', codeName: '', errorMsg: ''
         })
-        this.loadConfig()
+
       }
     } catch (e) {
       wx.hideLoading()
@@ -268,11 +276,29 @@ Page({
   // ── 选择人数 ──
   selectCount(e) {
     const count = e.currentTarget.dataset.count
-    const total = (count * parseFloat(this.data.unitPrice)).toFixed(2)
-    this.setData({ peopleCount: count, totalPrice: total })
+    const price = String(this.data._realUnitPrice || this.data.unitPrice)
+    const total = (count * parseFloat(price)).toFixed(2)
+    this.setData({ peopleCount: count, unitPrice: price, totalPrice: total })
   },
 
   async confirmPeople() {
+    // 时段限制：周一至五 11:30-21:00，周六日 08:30-21:00
+    const now = new Date()
+    const day = now.getDay()
+    const time = now.getHours() * 60 + now.getMinutes()
+    const isWeekend = day === 0 || day === 6
+    const openTime = isWeekend ? '9:00' : '12:00'
+    const buyStart = isWeekend ? 510 : 690
+    const buyEnd = 1260
+    if (time < buyStart) {
+      const text = isWeekend ? '周末 09:00 开馆\n08:30 之后再来买票吧' : '周中 12:00 开馆\n11:30 之后再来买票吧'
+      this.showTimeTip(text)
+      return
+    }
+    if (time >= buyEnd) {
+      this.showTimeTip('22:00 闭馆\n明天再来吧')
+      return
+    }
     wx.showLoading({ title: '创建订单...' })
     try {
       const res = await wx.cloud.callFunction({
@@ -280,7 +306,9 @@ Page({
         data: {
           openid: app.globalData.openid,
           amount: parseFloat(this.data.totalPrice),
-          description: `${this.data.passcodeCategory}游泳票 x${this.data.peopleCount}人`
+          nickname: app.globalData.nickname,
+          pool: this.data.passcodeCategory,
+          peopleCount: this.data.peopleCount
         }
       })
       wx.hideLoading()
@@ -298,10 +326,28 @@ Page({
         paySign: payment.paySign,
         success: async () => {
           wx.showLoading({ title: '处理中...' })
-          await api.confirmPaymentCB(app.globalData.openid, this.data.passcodeId, this.data.passcodeName, this.data.peopleCount)
-          const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
-          wx.hideLoading()
-          this.setData({ status: 'showCredentials', credentials: cred })
+          try {
+            const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
+            const ticket = {
+              pool: this.data.passcodeCategory || this.data.passcodeName,
+              username: cred.username,
+              password: cred.password,
+              unitPrice: parseFloat(this.data.unitPrice),
+              totalPrice: parseFloat(this.data.totalPrice),
+              peopleCount: this.data.peopleCount,
+              paidAt: Date.now(),
+              timeStr: formatTime(new Date())
+            }
+            const result = await api.confirmPaymentCB(app.globalData.openid, this.data.passcodeId, this.data.passcodeName, this.data.peopleCount, ticket)
+            ticket._orderId = result.orderId
+            wx.hideLoading()
+            app.globalData.pendingTicket = ticket
+            const pages = getCurrentPages()
+            wx.navigateBack({ delta: pages.length - 1 })
+          } catch {
+            wx.hideLoading()
+            wx.showToast({ title: '处理失败，请联系国哥', icon: 'none', duration: 2500 })
+          }
         },
         fail: () => {
           wx.showToast({ title: '支付取消', icon: 'none' })
@@ -313,17 +359,15 @@ Page({
     }
   },
 
-  // ── 加载全局配置(收款码/引导文案) ──
-  async loadConfig() {
-    try {
-      const cfg = await api.getAdminConfigCB()
-      const qr = await api.getQRUrlCB().catch(() => '')
-      if (qr) this.setData({ qrUrl: qr })
-      if (cfg.guideText) {
-        this.setData({ guideLines: cfg.guideText.split('\n') })
-      }
-    } catch {}
+  // ── 时段提示弹窗 ──
+  showTimeTip(text) {
+    this.setData({ timeTipVisible: true, timeTipOut: false, timeTipText: text })
   },
+  hideTimeTip() {
+    this.setData({ timeTipOut: true })
+    setTimeout(() => this.setData({ timeTipVisible: false, timeTipOut: false }), 280)
+  },
+  noop() {},
 
   // ── 切换泳池 ──
   onSwitchPool() {
@@ -350,29 +394,10 @@ Page({
       passcodeId: passcode.id,
       passcodeName: passcode.name,
       passcodeCategory: passcode.category,
-      unitPrice: price,
+      _realUnitPrice: price, unitPrice: price,
       totalPrice: total,
       showPoolPicker: false
     })
-  },
-
-  // ── 付款确认 ──
-  async confirmPayment() {
-    wx.showLoading({ title: '请稍候...' })
-    try {
-      await api.confirmPaymentCB(app.globalData.openid, this.data.passcodeId, this.data.passcodeName, this.data.peopleCount)
-      const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
-      wx.hideLoading()
-      this.setData({ status: 'showCredentials', credentials: cred })
-    } catch {
-      wx.hideLoading()
-      try {
-        const cred = await api.getCredentialsCB(this.data.selectedPasscodeId, app.globalData.openid)
-        this.setData({ status: 'showCredentials', credentials: cred })
-      } catch {
-        wx.showToast({ title: '获取失败，请重试', icon: 'none' })
-      }
-    }
   },
 
   // ── 刷新账号密码 ──
@@ -423,7 +448,7 @@ Page({
           passcodeId: selected.id,
           passcodeName: selected.name,
           passcodeCategory: selected.category,
-          unitPrice: price,
+          _realUnitPrice: price, unitPrice: price,
           totalPrice: total,
           showBindDialog: false,
           newBindCodeName: ''

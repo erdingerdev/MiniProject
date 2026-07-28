@@ -12,8 +12,32 @@ function sign(timestamp, nonceStr, prepayId) {
   return crypto.createHash('md5').update(str).digest('hex').toUpperCase()
 }
 
+// 过滤 emoji 和不可打印字符，保留中文/英文/数字/常用标点
+function sanitize(str) {
+  return (str || '').replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{FE0F}\u{E0020}-\u{E007F}]/gu, '')
+}
+
+// 转义 XML 特殊字符
+function escapeXml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+// 截断到指定字节数（UTF-8 中文 3 字节/字）
+function truncateBytes(str, maxBytes) {
+  let bytes = 0, i = 0
+  for (; i < str.length; i++) {
+    const c = str.charCodeAt(i)
+    bytes += c < 0x80 ? 1 : c < 0x800 ? 2 : 3
+    if (bytes > maxBytes) break
+  }
+  return str.slice(0, i)
+}
+
 exports.main = async (event, context) => {
-  const { openid, amount, description } = event
+  const { openid, amount, nickname, pool, peopleCount } = event
+  // 微信支付 body 限制 128 字节，留余量截断
+  let description = sanitize(`${nickname || '用户'}【${pool || '游泳'}】x${peopleCount || 1}人`)
+  description = truncateBytes(description, 120)
 
   // 生成订单号
   const outTradeNo = 'PAY' + Date.now() + Math.random().toString(36).slice(2, 6)
@@ -26,16 +50,16 @@ exports.main = async (event, context) => {
     appid: APPID,
     mch_id: MCHID,
     nonce_str: Math.random().toString(36).slice(2, 18),
-    body: description || '游泳票',
+    body: description,
     out_trade_no: outTradeNo,
     total_fee: Math.round(amount * 100), // 金额（分）
     spbill_create_ip: '127.0.0.1',
-    notify_url: 'https://erdinger.top/api/wxpay/notify',
+    notify_url: 'https://erdinger-dev-d0gzsgzbo6e40458d.service.tcloudbase.com/wxpay/notify',
     trade_type: 'JSAPI',
     openid: openid
   }
 
-  // 生成签名
+  // 生成签名（用原始值，不做 XML 转义）
   const sortedKeys = Object.keys(params).sort()
   let signStr = ''
   for (const k of sortedKeys) {
@@ -46,10 +70,10 @@ exports.main = async (event, context) => {
   signStr += `key=${API_KEY}`
   params.sign = crypto.createHash('md5').update(signStr).digest('hex').toUpperCase()
 
-  // 转 XML
+  // 转 XML（构建时才对字段值做 XML 转义）
   let xml = '<xml>'
   for (const k of Object.keys(params)) {
-    xml += `<${k}>${params[k]}</${k}>`
+    xml += `<${k}>${escapeXml(String(params[k]))}</${k}>`
   }
   xml += '</xml>'
 

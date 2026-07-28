@@ -476,3 +476,124 @@
 .theme-light .contact-link {
   color: rgba(255,255,255,0.8);
 }
+/* ── 时段提示弹窗 ── */
+.timetip-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: timetip-in 0.3s ease-out forwards;
+}
+.timetip-overlay.out {
+  animation: timetip-out 0.25s ease-in forwards;
+}
+@keyframes timetip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes timetip-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.timetip-card {
+  position: relative;
+  background: linear-gradient(160deg, #0a1628 0%, #0f1f38 100%);
+  border: 2rpx solid rgba(6, 182, 212, 0.6);
+  border-radius: 16rpx;
+  padding: 48rpx 56rpx;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: 0 0 40rpx rgba(6, 182, 212, 0.4), 0 0 80rpx rgba(6, 182, 212, 0.2), inset 0 0 40rpx rgba(6, 182, 212, 0.08);
+  width: 500rpx;
+  padding: 64rpx 72rpx;
+}
+.timetip-text {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #06b6d4;
+  line-height: 1.8;
+  white-space: pre-line;
+  text-shadow: 0 0 20rpx rgba(6, 182, 212, 0.3);
+  letter-spacing: 2rpx;
+}
+.timetip-noise {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 3rpx, rgba(6, 182, 212, 0.3) 3rpx, rgba(6, 182, 212, 0.3) 4rpx,
+    transparent 4rpx, transparent 12rpx
+  );
+  animation: noise-flicker 0.12s steps(3) infinite;
+  pointer-events: none;
+}
+@keyframes noise-flicker {
+  0% { opacity: 0.03; transform: translateY(0); }
+  33% { opacity: 0.12; transform: translateY(-2rpx); }
+  66% { opacity: 0.05; transform: translateY(3rpx); }
+  100% { opacity: 0.08; transform: translateY(-1rpx); }
+}
+.timetip-scanline {
+  position: absolute;
+  height: 3rpx;
+  background: linear-gradient(90deg, transparent 3%, rgba(6, 182, 212, 0.5) 20%, rgba(200, 240, 255, 0.9) 50%, rgba(6, 182, 212, 0.5) 80%, transparent 97%);
+  pointer-events: none;
+  box-shadow: 0 0 8rpx rgba(6, 182, 212, 0.5);
+}
+.timetip-scanline.s1 { left: 8%; width: 55%; animation: glitch-line-1 1.6s steps(8) infinite; }
+.timetip-scanline.s2 { left: 35%; width: 45%; animation: glitch-line-2 2.1s steps(8) infinite; }
+.timetip-scanline.s3 { left: 5%; width: 70%; animation: glitch-line-3 1.8s steps(8) infinite; }
+@keyframes glitch-line-1 {
+  0%, 14% { top: 20%; opacity: 0; }
+  16% { top: 20%; opacity: 1; }
+  18% { top: 22%; opacity: 0.6; }
+  19% { top: 22%; opacity: 0; }
+  44% { top: 65%; opacity: 0; }
+  46% { top: 65%; opacity: 1; }
+  47% { top: 63%; opacity: 0.8; }
+  48% { top: 67%; opacity: 0; }
+  72% { top: 38%; opacity: 0; }
+  74% { top: 38%; opacity: 0.9; }
+  76% { top: 40%; opacity: 0; }
+  90% { top: 85%; opacity: 0; }
+  92% { top: 85%; opacity: 1; }
+  93% { top: 83%; opacity: 0.5; }
+  94% { top: 87%; opacity: 0; }
+  100% { top: 85%; opacity: 0; }
+}
+@keyframes glitch-line-2 {
+  0%, 24% { top: 45%; opacity: 0; }
+  26% { top: 45%; opacity: 0.9; }
+  27% { top: 48%; opacity: 0.7; }
+  28% { top: 43%; opacity: 0; }
+  54% { top: 12%; opacity: 0; }
+  56% { top: 12%; opacity: 1; }
+  58% { top: 14%; opacity: 0; }
+  78% { top: 75%; opacity: 0; }
+  80% { top: 75%; opacity: 0.8; }
+  82% { top: 73%; opacity: 0; }
+  94% { top: 30%; opacity: 0; }
+  96% { top: 30%; opacity: 1; }
+  97% { top: 32%; opacity: 0.5; }
+  98% { top: 28%; opacity: 0; }
+  100% { top: 30%; opacity: 0; }
+}
+@keyframes glitch-line-3 {
+  0%, 32% { top: 55%; opacity: 0; }
+  34% { top: 55%; opacity: 1; }
+  35% { top: 58%; opacity: 0.6; }
+  36% { top: 52%; opacity: 0; }
+  62% { top: 18%; opacity: 0; }
+  64% { top: 18%; opacity: 0.85; }
+  66% { top: 20%; opacity: 0; }
+  84% { top: 70%; opacity: 0; }
+  86% { top: 70%; opacity: 1; }
+  87% { top: 68%; opacity: 0.7; }
+  88% { top: 72%; opacity: 0; }
+  96% { top: 48%; opacity: 0; }
+  98% { top: 48%; opacity: 0.9; }
+  99% { top: 50%; opacity: 0; }
+  100% { top: 48%; opacity: 0; }
+}

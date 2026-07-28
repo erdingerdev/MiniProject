@@ -19,7 +19,24 @@ Page({
     themeTransing: false,
     clockTime: '',
     earthLeft: 0,
-    earthTop: 0
+    earthTop: 0,
+    // 票系统
+    tickets: [],
+    showTicketList: false,
+    ticketListClosing: false,
+    removingId: 0,
+    showTicketAnim: false,
+    // 核销输入
+    showRedeemInput: false,
+    redeemTicketId: 0,
+    redeemRemainCount: '',
+    showQRModal: false,
+    contactQRUrl: '',
+    timeTipVisible: false,
+    timeTipOut: false,
+    timeTipText: '',
+    ticketAnimPhase: '',
+    animTicket: { pool: '', username: '', password: '' }
   },
 
   onLoad() {
@@ -67,6 +84,8 @@ Page({
   },
 
   async onShow() {
+    // 时钟可能在 onHide 时被清除，重新启动
+    if (!this._clockTimer) this.startClock()
     // 同步主题
     const theme = wx.getStorageSync('theme') || 'dark'
     if (this.data.theme !== theme) {
@@ -102,9 +121,28 @@ Page({
         return
       }
     }
-    this.loadPasscodeStatus()
-    this.loadInactiveStatus()
-    this.loadSwimSettings()
+    // 支付成功后回到首页，优先出票动画，结束后再加载数据
+    if (app.globalData.pendingTicket) {
+      const ticket = app.globalData.pendingTicket
+      app.globalData.pendingTicket = null
+      this.setData({ animTicket: ticket, showTicketAnim: true, ticketAnimPhase: 'print' })
+      setTimeout(() => {
+        this.setData({ ticketAnimPhase: 'shrink' })
+      }, 1700)
+      setTimeout(() => {
+        this.setData({ showTicketAnim: false, ticketAnimPhase: '' })
+        this.saveTicket(ticket)
+        this.loadPasscodeStatus()
+        this.loadInactiveStatus()
+        this.loadTickets()
+        this.loadSwimSettings()
+      }, 2700)
+    } else {
+      this.loadPasscodeStatus()
+      this.loadInactiveStatus()
+      this.loadTickets()
+      this.loadSwimSettings()
+    }
   },
 
   async loadPasscodeStatus() {
@@ -185,16 +223,42 @@ Page({
   async loadSwimSettings() {
     try {
       const res = await api.getSwimSettingsCB()
-      this.setData({ swimEnabled: res.swimEnabled !== false })
-    } catch {}
+      this.setData({ swimEnabled: res.swimEnabled === true })
+    } catch {
+      // 查询失败时保守关闭入口
+      this.setData({ swimEnabled: false })
+    }
   },
 
   goLeaderboard() {
     wx.navigateTo({ url: '/pages/leaderboard/leaderboard' })
   },
 
-  goAdmin() {
+  // ── 标题 8 连击 → 后台管理 ──
+  onTitleLongPress() {
     wx.navigateTo({ url: '/pages/admin/admin' })
+  },
+
+  // ── 联系国哥 ──
+  async showContactQR() {
+    this.setData({ showQRModal: true })
+    if (!this.data.contactQRUrl) {
+      try {
+        const url = await api.getQRUrlCB()
+        this.setData({ contactQRUrl: url })
+      } catch { /* ignore */ }
+    }
+  },
+  hideContactQR() {
+    this.setData({ showQRModal: false })
+  },
+  noop() {},
+  showTimeTip(text) {
+    this.setData({ timeTipVisible: true, timeTipOut: false, timeTipText: text })
+  },
+  hideTimeTip() {
+    this.setData({ timeTipOut: true })
+    setTimeout(() => this.setData({ timeTipVisible: false, timeTipOut: false }), 280)
   },
 
   goFeedback() {
@@ -231,6 +295,94 @@ Page({
       title: '得闲意 — 行到水穷处，坐看云起时',
       path: '/pages/index/index'
     }
+  },
+
+  // ── 票系统 ──
+  saveTicket(ticket) {
+    let tickets = this.data.tickets.concat(ticket)
+    // 去重（CB 恢复的订单和 pendingTicket 可能是同一条）
+    const seen = new Set()
+    tickets = tickets.filter(t => {
+      const key = t.paidAt + '_' + t.username
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    // 过滤超2小时和已核销
+    const now = Date.now()
+    tickets = tickets.filter(t => !t.redeemed && now - t.paidAt < 7200000)
+    this.setData({ tickets })
+    wx.setStorageSync('myTickets', tickets)
+  },
+
+  async loadTickets() {
+    let tickets = wx.getStorageSync('myTickets') || []
+    // CB 恢复已禁用（orders 集合仅可写不可读）
+    // 用户票据仅存储于本地缓存
+    const now = Date.now()
+    tickets = tickets.filter(t => !t.redeemed && now - t.paidAt < 7200000)
+    this.setData({ tickets })
+    wx.setStorageSync('myTickets', tickets)
+  },
+
+  showTickets() {
+    this.setData({ showTicketList: true })
+    this.loadTickets()
+  },
+
+  closeTicketList() {
+    // 先播退出动画，再移除
+    this.setData({ ticketListClosing: true })
+    setTimeout(() => {
+      this.setData({ showTicketList: false, ticketListClosing: false })
+    }, 400)
+  },
+
+  redeemTicket(e) {
+    const id = e.currentTarget.dataset.id
+    // 弹输入框让用户填写剩余次数
+    this.setData({ showRedeemInput: true, redeemTicketId: id, redeemRemainCount: '' })
+  },
+  onRedeemRemainInput(e) {
+    const val = e.detail.value.replace(/[^0-9]/g, '')
+    this.setData({ redeemRemainCount: val })
+  },
+  async confirmRedeem() {
+    const id = this.data.redeemTicketId
+    const remain = this.data.redeemRemainCount.trim()
+    const ticket = this.data.tickets.find(t => t.paidAt === id)
+    this.setData({ showRedeemInput: false })
+    if (!ticket) return
+    // 标记移除 → 播放退出动画 → 真正删除
+    this.setData({ removingId: id })
+    setTimeout(async () => {
+      const tickets = this.data.tickets.map(t => {
+        if (t.paidAt === id) t.redeemed = true
+        return t
+      }).filter(t => !t.redeemed)
+      this.setData({ tickets, removingId: 0, showTicketList: tickets.length > 0 })
+      wx.setStorageSync('myTickets', tickets)
+      // 同步 CB：标记订单已核销
+      if (wx.cloud && ticket && ticket._orderId) {
+        wx.cloud.database().collection('orders').doc(ticket._orderId)
+          .update({ data: { redeemed: true } }).catch(() => {})
+      }
+      // 发送企微通知
+      if (wx.cloud && ticket) {
+        wx.cloud.callFunction({
+          name: 'notifyRedeem',
+          data: {
+            pool: ticket.pool,
+            nickname: app.globalData.nickname,
+            peopleCount: ticket.peopleCount,
+            remainCount: remain
+          }
+        }).catch(() => {})
+      }
+    }, 400)
+  },
+  cancelRedeem() {
+    this.setData({ showRedeemInput: false })
   },
 
   onShareTimeline() {

@@ -36,14 +36,14 @@ App({
     }
   },
 
-  // 微信登录获取 openid（模拟器超时走 mock）
+  // 微信登录获取 openid（模拟器超时走 mock，mock 持久化避免每次变）
   async doLogin() {
     return new Promise((resolve, reject) => {
       let done = false
       const timeout = setTimeout(() => {
         if (done) return
         done = true
-        const mockId = 'dev_' + Date.now()
+        const mockId = this.getMockOpenid()
         this.globalData.openid = mockId
         this.globalData.token = 'mock'
         console.warn('wx.login 超时，使用开发模式 openid:', mockId)
@@ -70,7 +70,7 @@ App({
           if (done) return
           clearTimeout(timeout)
           done = true
-          const mockId = 'dev_' + Date.now()
+          const mockId = this.getMockOpenid()
           this.globalData.openid = mockId
           this.globalData.token = 'mock'
           console.warn('wx.login 失败，使用开发模式 openid:', mockId, err)
@@ -78,6 +78,15 @@ App({
         }
       })
     })
+  },
+
+  getMockOpenid() {
+    let id = wx.getStorageSync('mock_openid')
+    if (!id) {
+      id = 'dev_' + Date.now()
+      wx.setStorageSync('mock_openid', id)
+    }
+    return id
   },
 
   // 获取用户头像昵称
