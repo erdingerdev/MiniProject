@@ -1,0 +1,80 @@
+<view class="container theme-{{theme}}">
+  <!-- 背景光球 -->
+  <view class="bg-layer">
+    <view class="orb orb-cyan"></view>
+    <view class="orb orb-purple"></view>
+  </view>
+
+  <!-- 导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+    <text class="nav-title">{{type === 'driver' ? '我是车主' : '我找车'}}</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <view class="form">
+    <!-- 发布类型 -->
+    <view class="field-group">
+      <text class="field-label">发布类型</text>
+      <view class="type-row">
+        <view class="type-chip {{type === 'driver' ? 'active' : ''}}" bindtap="switchType" data-type="driver">🚗 我车有空位(找人)</view>
+        <view class="type-chip {{type === 'passenger' ? 'active' : ''}}" bindtap="switchType" data-type="passenger">🧑 我想找顺路(找车)</view>
+      </view>
+    </view>
+
+    <!-- 起终点 -->
+    <view class="field-group">
+      <text class="field-label">起终点</text>
+      <view class="route-picker-row">
+        <picker class="route-picker-wrap" mode="selector" range="{{stations}}" range-key="name" bindchange="onOriginChange" value="{{originIndex}}">
+          <view class="route-picker">{{originIndex >= 0 ? stations[originIndex].name : '起点'}}</view>
+        </picker>
+        <view class="route-dash">
+          <view class="route-dot"></view>
+          <view class="route-line"></view>
+          <view class="route-dot"></view>
+        </view>
+        <picker class="route-picker-wrap" mode="selector" range="{{stations}}" range-key="name" bindchange="onDestChange" value="{{destIndex}}">
+          <view class="route-picker">{{destIndex >= 0 ? stations[destIndex].name : '终点'}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 出发时间 -->
+    <view class="field-group">
+      <text class="field-label">出发时间</text>
+      <picker mode="multiSelector" range="{{[hours, minutes]}}" bindchange="onTimeChange" bindcolumnchange="onTimeColumnChange" value="{{[timeHourIndex, timeMinuteIndex]}}">
+        <view class="picker time-picker">
+          <text class="time-val">{{departTime || '请选择'}}</text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 人数 -->
+    <view class="field-group">
+      <text class="field-label">{{type === 'driver' ? '可带人数' : '通勤人数'}}</text>
+      <view class="count-row">
+        <view class="count-chip {{peopleCount === item ? 'active' : ''}}" wx:for="{{countOptions}}" wx:key="*this" bindtap="onCountChange" data-value="{{item}}">{{item}}</view>
+      </view>
+    </view>
+
+    <!-- 联系方式 -->
+    <view class="field-group">
+      <text class="field-label">联系方式</text>
+      <input class="input" placeholder="微信号或手机号" value="{{contact}}" bindinput="onContactInput" maxlength="60"/>
+    </view>
+
+    <!-- 备注 -->
+    <view class="field-group field-group-full">
+      <text class="field-label">备注（选填）</text>
+      <textarea class="textarea" placeholder="例如：工作日每天都有" value="{{note}}" bindinput="onNoteInput" maxlength="100"/>
+    </view>
+
+    <!-- 覆盖提示 -->
+    <view class="overwrite-hint" wx:if="{{hasExisting}}">
+      <text>发布将覆盖旧公告</text>
+    </view>
+
+    <button class="submit-btn" bindtap="submit" disabled="{{submitting}}">发布</button>
+  </view>
+</view>

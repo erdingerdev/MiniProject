@@ -67,22 +67,16 @@
       <text class="card-desc">通行码验证 · 获取入场凭证</text>
     </view>
     <view class="card-row" style="animation-delay: 0.3s">
-      <view class="card card-half" bindtap="goMine">
-        <view class="card-icon">📅</view>
-        <text class="card-title">我的</text>
-        <text class="card-desc">打卡记录 · 游泳统计</text>
+      <view class="card card-half" bindtap="goHub">
+        <view class="card-icon">🏪</view>
+        <text class="card-title">驿站</text>
+        <text class="card-desc">通勤公告 · 更多功能</text>
+        <view class="card-badge" wx:if="{{carpoolUnread}}">{{carpoolUnread > 99 ? '99+' : carpoolUnread}}</view>
       </view>
       <view class="card card-half" style="animation-delay: 0.4s" bindtap="showContactQR">
         <view class="card-icon">🔳</view>
         <text class="card-title">联系国哥</text>
         <text class="card-desc">有问题 · 找国哥</text>
-      </view>
-    </view>
-    <view class="card-row" style="animation-delay: 0.5s">
-      <view class="card card-half" bindtap="goFeedback">
-        <view class="card-icon">💬</view>
-        <text class="card-title">意见反馈</text>
-        <text class="card-desc">建议 · 吐槽 · 报 Bug</text>
       </view>
     </view>
   </view>

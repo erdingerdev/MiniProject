@@ -4,22 +4,29 @@ const db = wx.cloud ? wx.cloud.database() : null
 Page({
   data: {
     content: '',
-    theme: 'dark'
+    theme: 'dark',
+    bgStyle: '',
+    statusBarHeight: 0
   },
 
   onLoad() {
+    const sys = wx.getSystemInfoSync()
     const theme = wx.getStorageSync('theme') || 'dark'
-    if (this.data.theme !== theme) this.setData({ theme })
-    wx.setNavigationBarColor({
-      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
-      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
-    })
+    const bgStyle = theme === 'light'
+      ? 'background: linear-gradient(160deg, #016B61 0%, #70B2B2 40%, #9ECFD4 70%, #E5E9C5 100%);'
+      : ''
+    this.setData({ theme, bgStyle, statusBarHeight: sys.statusBarHeight })
   },
 
   onShow() {
     const theme = wx.getStorageSync('theme') || 'dark'
-    if (this.data.theme !== theme) this.setData({ theme })
+    const bgStyle = theme === 'light'
+      ? 'background: linear-gradient(160deg, #016B61 0%, #70B2B2 40%, #9ECFD4 70%, #E5E9C5 100%);'
+      : ''
+    if (this.data.theme !== theme || this.data.bgStyle !== bgStyle) this.setData({ theme, bgStyle })
   },
+
+  goBack() { wx.navigateBack() },
 
   onInput(e) {
     this.setData({ content: e.detail.value })

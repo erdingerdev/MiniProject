@@ -65,6 +65,7 @@
       <text class="price-total">合计 {{totalPrice}} 元</text>
     </view>
     <button class="btn-primary" bindtap="confirmPeople">确认支付 {{totalPrice}} 元</button>
+    <text class="mine-link" bindtap="goMine">查看打卡记录 →</text>
   </view>
 
   <!-- 状态: 展示账号密码 -->

@@ -476,6 +476,15 @@
 .theme-light .contact-link {
   color: rgba(255,255,255,0.8);
 }
+
+/* ── 打卡入口链接 ── */
+.mine-link {
+  font-size: 26rpx;
+  color: var(--text-dim);
+  margin-top: 32rpx;
+  padding: 8rpx 16rpx;
+}
+
 /* ── 时段提示弹窗 ── */
 .timetip-overlay {
   position: fixed;

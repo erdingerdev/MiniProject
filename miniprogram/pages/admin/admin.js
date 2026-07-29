@@ -4,10 +4,24 @@ Page({
   data: {
     authed: false,
     adminPwd: '',
+    statusBarHeight: 0,
     errorMsg: '',
 
     // tab
     tab: 'config',
+
+    // 站台
+    stations: [],
+    showStationAdd: false,
+    newStationName: '',
+    newStationDir: '',
+
+    // 审核
+    reviewRoutes: [],
+    reviewedRoutes: [],
+    showRejectModal: false,
+    rejectRouteId: '',
+    rejectReason: '',
 
     // 配置
     qrPreview: '',
@@ -63,7 +77,9 @@ Page({
   },
 
   onLoad() {
+    const sys = wx.getSystemInfoSync()
     const saved = wx.getStorageSync('adminPwd')
+    this.setData({ statusBarHeight: sys.statusBarHeight })
     if (saved) {
       this.setData({ adminPwd: saved })
     }
@@ -72,10 +88,6 @@ Page({
   onShow() {
     const theme = wx.getStorageSync('theme') || 'dark'
     if (this.data.theme !== theme) this.setData({ theme })
-    wx.setNavigationBarColor({
-      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
-      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
-    })
     if (this.data.authed) {
       this.loadConfig()
       this.loadPasscodes(true)
@@ -107,15 +119,103 @@ Page({
     }
   },
 
+  goBack() { wx.navigateBack() },
+
   // ── Tab ──
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
     this.setData({ tab, expandedId: '' })
     if (tab === 'config') this.loadConfig()
+    if (tab === 'stations') this.loadStations()
+    if (tab === 'review') this.loadReviewRoutes()
     if (tab === 'passcodes') { this.loadPasscodes(true); this.loadPasscodeCount() }
     if (tab === 'users') { this.loadUsers(true) }
     if (tab === 'logs') this.loadOrders(true)
     if (tab === 'feedbacks') this.loadFeedbacks(true)
+  },
+
+  // ── 审核管理 ──
+  async loadReviewRoutes() {
+    wx.showLoading({ title: '加载中...' })
+    try {
+      const [pending, reviewed] = await Promise.all([
+        wx.cloud.callFunction({ name: 'carpoolAdminGetRoutes', data: { status: 'pending' } }),
+        wx.cloud.callFunction({ name: 'carpoolAdminGetRoutes', data: { status: 'approved' } })
+      ])
+      const rejected = await wx.cloud.callFunction({ name: 'carpoolAdminGetRoutes', data: { status: 'rejected' } })
+      const allReviewed = [...(reviewed.result.routes || []), ...(rejected.result.routes || [])]
+      this.setData({
+        reviewRoutes: pending.result.routes || [],
+        reviewedRoutes: allReviewed.sort((a, b) => b.createdAt - a.createdAt)
+      })
+    } catch (e) {
+      console.error('loadReviewRoutes error:', e)
+    }
+    wx.hideLoading()
+  },
+  async doReviewRoute(e) {
+    const { id, action } = e.currentTarget.dataset
+    if (action === 'reject') {
+      this.setData({ showRejectModal: true, rejectRouteId: id, rejectReason: '' })
+      return
+    }
+    const title = action === 'approve' ? '确认通过' : '确认删除'
+    wx.showModal({
+      title,
+      success: async (res) => {
+        if (!res.confirm) return
+        wx.showLoading({ title: '处理中...' })
+        try {
+          await wx.cloud.callFunction({ name: 'carpoolAdminReview', data: { routeId: id, action: action } })
+          wx.hideLoading()
+          this.loadReviewRoutes()
+        } catch { wx.hideLoading(); wx.showToast({ title: '操作失败', icon: 'none' }) }
+      }
+    })
+  },
+  hideRejectModal() { this.setData({ showRejectModal: false }) },
+  onRejectReasonInput(e) { this.setData({ rejectReason: e.detail.value }) },
+  async confirmReject() {
+    const { rejectRouteId: id, rejectReason: reason } = this.data
+    wx.showLoading({ title: '处理中...' })
+    try {
+      await wx.cloud.callFunction({ name: 'carpoolAdminReview', data: { routeId: id, action: 'reject', reason } })
+      wx.hideLoading()
+      this.setData({ showRejectModal: false })
+      this.loadReviewRoutes()
+    } catch { wx.hideLoading(); wx.showToast({ title: '操作失败', icon: 'none' }) }
+  },
+
+  // ── 站台管理 ──
+  async loadStations() {
+    try {
+      const res = await wx.cloud.callFunction({ name: 'carpoolAdminStations', data: { action: 'list' } })
+      this.setData({ stations: res.result.stations || [] })
+    } catch {}
+  },
+  showStationSheet() { this.setData({ showStationAdd: true, newStationName: '', newStationDir: '' }) },
+  hideStationSheet() { this.setData({ showStationAdd: false }) },
+  onStationNameInput(e) { this.setData({ newStationName: e.detail.value }) },
+  onStationDirInput(e) { this.setData({ newStationDir: e.detail.value }) },
+  async doAddStation() {
+    if (!this.data.newStationName.trim()) return
+    wx.showLoading({ title: '添加中...' })
+    try {
+      await wx.cloud.callFunction({ name: 'carpoolAdminStations', data: { action: 'add', name: this.data.newStationName.trim(), direction: this.data.newStationDir.trim() } })
+      wx.hideLoading()
+      this.setData({ showStationAdd: false })
+      this.loadStations()
+    } catch { wx.hideLoading(); wx.showToast({ title: '添加失败', icon: 'none' }) }
+  },
+  async doDeleteStation(e) {
+    const id = e.currentTarget.dataset.id
+    wx.showModal({ title: '确认删除？', success: async (res) => {
+      if (!res.confirm) return
+      try {
+        await wx.cloud.callFunction({ name: 'carpoolAdminStations', data: { action: 'delete', stationId: id } })
+        this.loadStations()
+      } catch { wx.showToast({ title: '删除失败', icon: 'none' }) }
+    }})
   },
 
   async loadAll() {

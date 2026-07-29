@@ -1,7 +1,20 @@
-<view class="container theme-{{theme}}">
+<view class="container theme-{{theme}}" style="{{bgStyle}}">
+  <!-- 背景光球 -->
+  <view class="bg-layer">
+    <view class="orb orb-cyan"></view>
+    <view class="orb orb-purple"></view>
+  </view>
+
+  <!-- 导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+    <text class="nav-title">意见反馈</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
   <view class="form">
     <text class="label">说说你想要什么功能</text>
-    <textarea class="textarea" placeholder="比如：想要每周排行榜、泳姿教学视频..." value="{{content}}" bindinput="onInput" maxlength="500"/>
+    <textarea class="textarea" placeholder="比如：想要每周排行榜、泳姿教学视频..." placeholder-style="color: rgba(255,255,255,0.6)" value="{{content}}" bindinput="onInput" maxlength="500"/>
     <text class="count">{{content.length}}/500</text>
     <button class="btn-submit {{content.length > 0 ? 'active' : ''}}" bindtap="doSubmit" disabled="{{content.length === 0}}">提交反馈</button>
   </view>

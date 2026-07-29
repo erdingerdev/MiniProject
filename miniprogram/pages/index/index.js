@@ -36,7 +36,8 @@ Page({
     timeTipOut: false,
     timeTipText: '',
     ticketAnimPhase: '',
-    animTicket: { pool: '', username: '', password: '' }
+    animTicket: { pool: '', username: '', password: '' },
+    carpoolUnread: 0
   },
 
   onLoad() {
@@ -143,6 +144,16 @@ Page({
       this.loadTickets()
       this.loadSwimSettings()
     }
+    this.loadCarpoolUnread()
+  },
+
+  async loadCarpoolUnread() {
+    if (!app.globalData.openid) return
+    try {
+      const res = await wx.cloud.callFunction({ name: 'carpoolGetInteractions', data: { openid: app.globalData.openid } })
+      const data = res.result || {}
+      this.setData({ carpoolUnread: data.unreadCount || 0 })
+    } catch {}
   },
 
   async loadPasscodeStatus() {
@@ -261,8 +272,8 @@ Page({
     setTimeout(() => this.setData({ timeTipVisible: false, timeTipOut: false }), 280)
   },
 
-  goFeedback() {
-    wx.navigateTo({ url: '/pages/feedback/feedback' })
+  goHub() {
+    wx.navigateTo({ url: '/pages/hub/hub' })
   },
 
   goMine() {

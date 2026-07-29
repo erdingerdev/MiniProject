@@ -463,5 +463,13 @@ Page({
 
   goContact() {
     wx.navigateTo({ url: '/pages/contact/contact' })
+  },
+
+  goMine() {
+    if (!app.globalData.openid || !app.globalData.nickname || !app.globalData.avatar) {
+      wx.showToast({ title: '请先完善资料', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/mine/mine' })
   }
 })

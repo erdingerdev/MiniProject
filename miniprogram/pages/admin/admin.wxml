@@ -1,9 +1,14 @@
 <view class="container theme-{{theme}}">
+  <!-- 导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+    <text class="nav-title">后台管理</text>
+    <view class="nav-placeholder"></view>
+  </view>
 
   <!-- === 密码校验 === -->
   <view class="center-box" wx:if="{{!authed}}">
     <view class="icon-lg">🔐</view>
-    <text class="title">后台管理</text>
     <text class="hint">请输入管理密码</text>
     <input class="input-code" password placeholder="管理密码" value="{{adminPwd}}" bindinput="onPwdInput" maxlength="30"/>
     <button class="btn-primary" bindtap="doVerify" disabled="{{!adminPwd}}">验证</button>
@@ -15,10 +20,12 @@
     <!-- Tab 导航 -->
     <view class="tabs">
       <view class="tab {{tab==='config'?'active':''}}" bindtap="switchTab" data-tab="config">配置</view>
+      <view class="tab {{tab==='stations'?'active':''}}" bindtap="switchTab" data-tab="stations">站台</view>
+      <view class="tab {{tab==='review'?'active':''}}" bindtap="switchTab" data-tab="review">审核</view>
       <view class="tab {{tab==='passcodes'?'active':''}}" bindtap="switchTab" data-tab="passcodes">通行码</view>
       <view class="tab {{tab==='users'?'active':''}}" bindtap="switchTab" data-tab="users">用户</view>
-      <view class="tab {{tab==='logs'?'active':''}}" bindtap="switchTab" data-tab="logs">订单记录</view>
-      <view class="tab {{tab==='feedbacks'?'active':''}}" bindtap="switchTab" data-tab="feedbacks">意见列表</view>
+      <view class="tab {{tab==='logs'?'active':''}}" bindtap="switchTab" data-tab="logs">订单</view>
+      <view class="tab {{tab==='feedbacks'?'active':''}}" bindtap="switchTab" data-tab="feedbacks">意见</view>
     </view>
 
     <!-- ====== 配置 Tab ====== -->
@@ -80,6 +87,74 @@
         <text class="section-title">修改管理密码</text>
         <input class="field" password placeholder="新密码" value="{{newAdminPwd}}" bindinput="onNewAdminPwd"/>
         <button class="btn-sm btn-danger" bindtap="saveAdminPwd">更新管理密码</button>
+      </view>
+    </view>
+
+    <!-- ====== 站台 Tab ====== -->
+    <view class="tab-content" wx:if="{{tab==='stations'}}">
+      <view class="section">
+        <text class="section-title">站台列表 ({{stations.length}})</text>
+        <view class="station-item" wx:for="{{stations}}" wx:key="_id">
+          <view class="station-info">
+            <text class="station-name">{{item.name}}</text>
+            <text class="station-dir" wx:if="{{item.direction}}">{{item.direction}}</text>
+          </view>
+          <view class="station-del" bindtap="doDeleteStation" data-id="{{item._id}}">×</view>
+        </view>
+        <view class="empty" wx:if="{{stations.length===0}}">暂无站台，点击右下角 + 添加</view>
+      </view>
+
+      <!-- 悬浮按钮 -->
+      <view class="fab" bindtap="showStationSheet">
+        <text class="fab-icon">+</text>
+      </view>
+
+      <!-- 添加站台弹窗 -->
+      <view class="sheet-overlay" wx:if="{{showStationAdd}}" bindtap="hideStationSheet">
+        <view class="sheet-card" catchtap="noop">
+          <text class="sheet-title">添加站台</text>
+          <input class="field" placeholder="站台名称（如 BRT双十中学站）" value="{{newStationName}}" bindinput="onStationNameInput"/>
+          <input class="field" placeholder="方向（如 往岛内，选填）" value="{{newStationDir}}" bindinput="onStationDirInput"/>
+          <button class="btn-sm" bindtap="doAddStation" disabled="{{!newStationName}}">确认添加</button>
+          <button class="btn-sheet-close" bindtap="hideStationSheet">取消</button>
+        </view>
+      </view>
+    </view>
+
+    <!-- ====== 审核 Tab ====== -->
+    <view class="tab-content" wx:if="{{tab==='review'}}">
+      <view class="section">
+        <text class="section-title">待审核路线 ({{reviewRoutes.length}})</text>
+        <view class="review-item" wx:for="{{reviewRoutes}}" wx:key="_id">
+          <view class="review-top">
+            <view class="review-badge {{item.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{item.type === 'driver' ? '找人' : '找车'}}</view>
+            <view class="review-line">{{item.nickname}} · {{item.origin}} → {{item.destination}}</view>
+          </view>
+          <view class="review-sub">出发时间 {{item.departTime}} · {{item.type === 'driver' ? '可乘人数' : '通勤人数'}} {{item.peopleCount}}人 · 联系方式 {{item.contact}}</view>
+          <view class="review-sub" wx:if="{{item.note}}">备注 {{item.note}}</view>
+          <view class="review-actions">
+            <button class="btn-approve" bindtap="doReviewRoute" data-id="{{item._id}}" data-action="approve">通过</button>
+            <button class="btn-reject" bindtap="doReviewRoute" data-id="{{item._id}}" data-action="reject">拒绝</button>
+          </view>
+        </view>
+        <view class="empty" wx:if="{{reviewRoutes.length===0}}">暂无待审核路线</view>
+      </view>
+
+      <!-- 已审核 -->
+      <view class="section">
+        <text class="section-title">已审核路线</text>
+        <view class="review-item done" wx:for="{{reviewedRoutes}}" wx:key="_id">
+          <view class="review-top">
+            <view class="review-badge {{item.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{item.type === 'driver' ? '找人' : '找车'}}</view>
+            <view class="review-line">{{item.nickname}} · {{item.origin}} → {{item.destination}}</view>
+          </view>
+          <view class="review-sub">出发时间 {{item.departTime}} · {{item.status === 'approved' ? '已通过' : '已拒绝'}}</view>
+          <view class="review-sub" wx:if="{{item.rejectReason}}">原因：{{item.rejectReason}}</view>
+          <view class="review-actions">
+            <button class="btn-reject" bindtap="doReviewRoute" data-id="{{item._id}}" data-action="delete">删除</button>
+          </view>
+        </view>
+        <view class="empty" wx:if="{{reviewedRoutes.length===0}}">暂无</view>
       </view>
     </view>
 
@@ -227,6 +302,17 @@
         <view class="loading-tip" wx:if="{{feedbacksLoading}}">加载中...</view>
         <view class="loading-tip" wx:elif="{{!feedbacksHasMore && feedbacks.length > 0}}">没有更多了</view>
       </scroll-view>
+    </view>
+    <!-- 拒绝原因弹窗 -->
+    <view class="modal-overlay" wx:if="{{showRejectModal}}" bindtap="hideRejectModal">
+      <view class="modal-card" catchtap="noop">
+        <text class="modal-title">填写拒绝原因</text>
+        <input class="field" placeholder="拒绝原因（选填）" value="{{rejectReason}}" bindinput="onRejectReasonInput"/>
+        <view class="modal-btns">
+          <button class="btn-cancel" bindtap="hideRejectModal">取消</button>
+          <button class="btn-confirm" bindtap="confirmReject">确认拒绝</button>
+        </view>
+      </view>
     </view>
   </block>
 </view>

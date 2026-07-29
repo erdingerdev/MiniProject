@@ -1,0 +1,121 @@
+.container { min-height: 100vh; padding: 0 40rpx 120rpx; box-sizing: border-box; background: var(--bg-gradient, var(--bg)); }
+.container.theme-light { background: linear-gradient(160deg, #016B61 0%, #70B2B2 40%, #9ECFD4 70%, #E5E9C5 100%); }
+.theme-light .modal-card { background: rgba(255,255,255,0.6); backdrop-filter: blur(20rpx); }
+.theme-light .modal-route { color: #0a2a26; }
+.theme-light .modal-field { color: #1a4a44; }
+.theme-light .contact-label { color: #2a5a54; }
+.theme-light .contact-value { color: #0a2a26; }
+.theme-light .modal-hint { color: #3a6a64; }
+.theme-light .invite-sent-text { color: #057a5a; }
+.theme-light .invite-cancel-hint { color: #c0392b; }
+.theme-light .cancel-join { color: #c0392b; }
+.theme-light .route-item { background: rgba(255,255,255,0.6); }
+.theme-light .my-section { background: rgba(255,255,255,0.55); }
+
+/* 背景光球 */
+.bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.orb { position: absolute; border-radius: 50%; filter: blur(80rpx); opacity: 0.12; }
+.orb-cyan { width: 400rpx; height: 400rpx; background: #06b6d4; top: -100rpx; right: -100rpx; }
+.orb-purple { width: 300rpx; height: 300rpx; background: #8b5cf6; bottom: -80rpx; left: -80rpx; }
+
+/* 导航栏 */
+.nav-bar { position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; height: 88rpx; }
+.nav-back { width: 64rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; }
+.nav-back-icon { font-size: 52rpx; color: #e0e0e0; }
+.nav-title { font-size: 32rpx; font-weight: 600; color: #e0e0e0; }
+.nav-placeholder { width: 64rpx; }
+
+/* 悬浮按钮 */
+.fab { position: fixed; right: 40rpx; bottom: 120rpx; width: 96rpx; height: 96rpx; border-radius: 48rpx; background: #34d399; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 8rpx 24rpx rgba(52,211,153,0.3); }
+.fab-icon { font-size: 48rpx; color: #1a1a1a; font-weight: 300; line-height: 1; }
+
+/* 我的区域 */
+.my-section { position: relative; z-index: 1; background: rgba(255,255,255,0.04); border-radius: 16rpx; padding: 28rpx 24rpx 24rpx; margin-bottom: 24rpx; border: 1rpx solid rgba(255,255,255,0.06); }
+.my-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12rpx; }
+.my-reject-reason { font-size: 24rpx; color: #f87171; margin-bottom: 12rpx; }
+.my-route-line { font-size: 32rpx; font-weight: 700; color: #e0e0e0; text-align: center; margin-bottom: 16rpx; letter-spacing: 2rpx; }
+.my-meta { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 8rpx; }
+.my-contact { margin-top: 4rpx; }
+.my-meta-item { font-size: 28rpx; color: #ccc; }
+.my-note { margin-top: 10rpx; margin-bottom: 10rpx; }
+.my-note-text { font-size: 26rpx; color: #aaa; }
+.my-status { font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 8rpx; }
+.my-status.pending { background: #fbbf24; color: #1a1a1a; }
+.my-status.approved { background: #34d399; color: #1a1a1a; }
+.my-status.rejected { background: #f87171; color: #fff; }
+.section-label { font-size: 24rpx; color: #888; display: block; margin-bottom: 12rpx; }
+.passenger-item { display: flex; align-items: center; justify-content: space-between; padding: 20rpx 0; border-bottom: 1rpx solid rgba(255,255,255,0.06); }
+.passenger-name { font-size: 26rpx; color: #ccc; }
+.passenger-remove { font-size: 22rpx; color: #f87171; }
+.passenger-arrow { font-size: 28rpx; color: #888; }
+.invite-item { background: rgba(6,182,212,0.08); border-radius: 10rpx; padding: 16rpx 20rpx !important; margin-bottom: 8rpx; cursor: pointer; }
+.my-remind { margin-top: 16rpx; text-align: center; }
+.remind-btn { background: rgba(251,191,36,0.15); border: 2rpx solid rgba(251,191,36,0.3); color: #fbbf24; font-size: 24rpx; padding: 10rpx 24rpx; border-radius: 10rpx; display: inline-block; }
+.remind-btn[disabled] { opacity: 0.4; border-color: rgba(255,255,255,0.1); color: #888; background: rgba(255,255,255,0.04); }
+.my-actions { margin-top: 16rpx; display: flex; justify-content: center; }
+.my-delete-btn { background: rgba(248,113,113,0.1); border: 1rpx solid rgba(248,113,113,0.2); color: #f87171; font-size: 24rpx; padding: 10rpx 48rpx; border-radius: 10rpx; }
+
+/* 徽章 */
+.badge-driver { font-size: 28rpx; font-weight: 700; padding: 8rpx 18rpx; border-radius: 8rpx; background: rgba(6,182,212,0.2); color: #06b6d4; }
+.badge-passenger { font-size: 28rpx; font-weight: 700; padding: 8rpx 18rpx; border-radius: 8rpx; background: rgba(251,191,36,0.2); color: #fbbf24; }
+
+/* 分割线 */
+.divider { position: relative; z-index: 1; display: flex; align-items: center; gap: 16rpx; margin-bottom: 24rpx; }
+.divider-line { flex: 1; height: 1rpx; background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.12), rgba(255,255,255,0)); }
+.divider-text { font-size: 22rpx; color: #555; flex-shrink: 0; }
+
+/* 列表 */
+.route-list { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16rpx; }
+.route-item { display: flex; align-items: center; justify-content: space-between; padding: 24rpx 20rpx; border-radius: 14rpx; background: rgba(255,255,255,0.04); }
+.route-left { display: flex; align-items: center; gap: 16rpx; flex: 1; overflow: hidden; }
+.route-info { display: flex; flex-direction: column; gap: 6rpx; overflow: hidden; }
+.route-line { font-size: 28rpx; font-weight: 600; color: #e0e0e0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.route-sub { font-size: 22rpx; color: #888; }
+.route-right { display: flex; align-items: center; gap: 8rpx; }
+.route-nickname { font-size: 22rpx; color: #666; max-width: 120rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.route-arrow { font-size: 28rpx; color: #555; }
+.empty { text-align: center; padding: 80rpx 0; }
+.empty-text { font-size: 26rpx; color: #555; }
+.load-more { text-align: center; padding: 32rpx 0; font-size: 24rpx; color: #555; }
+
+/* 页脚提示 */
+.footer-note { position: fixed; bottom: 48rpx; left: 0; right: 0; z-index: 1; text-align: center; padding: 20rpx 40rpx; background: transparent; }
+.footer-note text { font-size: 20rpx; color: #555; line-height: 1.5; }
+.theme-light .footer-note text { color: rgba(0,0,0,0.25); }
+.theme-light .route-line { color: #0a2a26; }
+.theme-light .my-route-line { color: #0a2a26; }
+.theme-light .my-meta-item { color: #1a4a44; }
+.theme-light .my-note-text { color: #2a5a54; }
+.theme-light .passenger-name { color: #1a4a44; }
+.theme-light .nav-back-icon,
+.theme-light .nav-title { color: #fff; }
+.theme-light .nav-add { color: #fff; }
+.theme-light .route-nickname { color: #3a6a64; }
+.theme-light .route-sub { color: #2a5a54; }
+.theme-light .section-label { color: #2a5a54; }
+.theme-light .empty-text { color: #3a6a64; }
+.theme-light .divider-text { color: #4a7a74; }
+.theme-light .badge-driver { background: rgba(6,182,212,0.25); color: #057a8c; }
+.theme-light .badge-passenger { background: rgba(251,191,36,0.3); color: #8a6300; }
+.theme-light .my-status.pending { background: #e6a800; color: #fff; }
+.theme-light .my-status.approved { background: #1a8a6a; color: #fff; }
+
+/* 弹窗 */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 900; display: flex; align-items: center; justify-content: center; }
+.modal-card { background: #1a1f2e; border-radius: 20rpx; padding: 40rpx 32rpx; width: 580rpx; position: relative; }
+.modal-close { position: absolute; top: 16rpx; right: 20rpx; font-size: 32rpx; color: #888; }
+.modal-route-type { display: inline-block; margin-bottom: 12rpx; }
+.modal-route { font-size: 34rpx; font-weight: 700; color: #e0e0e0; display: block; margin-bottom: 24rpx; }
+.modal-fields { display: flex; flex-direction: column; gap: 12rpx; margin-bottom: 24rpx; }
+.modal-field { font-size: 26rpx; color: #aaa; }
+.modal-contact { margin-bottom: 24rpx; }
+.contact-label { font-size: 24rpx; color: #888; display: block; margin-bottom: 8rpx; }
+.contact-row { display: flex; align-items: center; gap: 16rpx; background: rgba(255,255,255,0.06); border-radius: 10rpx; padding: 16rpx; }
+.contact-value { font-size: 28rpx; color: #e0e0e0; flex: 1; }
+.contact-copy { font-size: 24rpx; color: #34d399; }
+.modal-btn { width: 100%; height: 80rpx; background: #34d399; color: #1a1a1a; font-size: 28rpx; font-weight: 600; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; }
+.modal-hint { font-size: 22rpx; color: #666; text-align: center; display: block; margin-top: 12rpx; }
+.invite-sent-text { font-size: 28rpx; color: #34d399; text-align: center; display: block; padding: 16rpx 0 6rpx; }
+.invite-cancel-hint { font-size: 22rpx; color: #f87171; text-align: center; display: block; padding-bottom: 12rpx; }
+.cancel-join { font-size: 24rpx; color: #f87171; text-align: center; display: block; margin-top: 20rpx; }
+

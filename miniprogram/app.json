@@ -7,7 +7,10 @@
     "pages/leaderboard/leaderboard",
     "pages/mine/mine",
     "pages/contact/contact",
-    "pages/feedback/feedback"
+    "pages/feedback/feedback",
+    "pages/hub/hub",
+    "pages/carpool/list/list",
+    "pages/carpool/publish/publish"
   ],
   "lazyCodeLoading": "requiredComponents",
   "window": {

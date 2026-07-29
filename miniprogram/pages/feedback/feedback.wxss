@@ -1,10 +1,27 @@
 .container {
   min-height: 100vh;
-  background: var(--bg-gradient, var(--bg));
-  padding: 40rpx;
+  padding: 0 40rpx 40rpx;
 }
+.theme-dark.container { background: var(--bg-gradient, var(--bg)); }
+.theme-light.container { background: linear-gradient(160deg, #016B61 0%, #70B2B2 40%, #9ECFD4 70%, #E5E9C5 100%); }
+
+/* 背景光球 */
+.bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.orb { position: absolute; border-radius: 50%; filter: blur(80rpx); opacity: 0.12; }
+.orb-cyan { width: 400rpx; height: 400rpx; background: #06b6d4; top: -100rpx; right: -100rpx; }
+.orb-purple { width: 300rpx; height: 300rpx; background: #8b5cf6; bottom: -80rpx; left: -80rpx; }
+
+/* 导航栏 */
+.nav-bar { position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; height: 88rpx; margin-bottom: 40rpx; }
+.nav-back { width: 64rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; }
+.nav-back-icon { font-size: 52rpx; color: #e0e0e0; line-height: 1; }
+.nav-title { font-size: 32rpx; font-weight: 600; color: #e0e0e0; }
+.nav-placeholder { width: 64rpx; }
+.theme-light .nav-back-icon,
+.theme-light .nav-title { color: #fff; }
 
 .form {
+  position: relative; z-index: 1;
   max-width: 600rpx;
   margin: 0 auto;
 }
@@ -94,6 +111,8 @@
 
 .theme-light .label { color: rgba(255,255,255,0.9); }
 .theme-light .textarea { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); color: #fff; }
+.theme-light .textarea::placeholder,
+.theme-light .textarea::-webkit-input-placeholder { color: rgba(255,255,255,0.6); }
 .theme-light .count { color: rgba(255,255,255,0.6); }
 .theme-light .item { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
 .theme-light .item-text { color: rgba(255,255,255,0.85); }
