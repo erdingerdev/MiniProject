@@ -61,7 +61,7 @@
 
   <!-- 入口宫格 -->
   <view class="grid">
-    <view class="card" style="animation-delay: 0.1s" bindtap="goSwim">
+    <view class="card swim-card" style="animation-delay: 0.1s" bindtap="goSwim">
       <view class="card-icon">🏊</view>
       <text class="card-title">获取游泳票</text>
       <text class="card-desc">通行码验证 · 获取入场凭证</text>
@@ -90,7 +90,7 @@
     <view class="ticket-overlay-bg {{ticketAnimPhase === 'shrink' ? 'overlay-fading' : ''}}"></view>
     <!-- 出票口：裁剪区域，票从上方滑入；收缩阶段允许飞出 -->
     <view class="ticket-slot {{ticketAnimPhase === 'shrink' ? 'slot-shrink' : ''}}">
-      <view class="ticket-card {{ticketAnimPhase}}">
+      <view class="ticket-card {{ticketAnimPhase}}" style="{{ticketCardStyle}}">
         <view class="ticket-rip"></view>
         <view class="ticket-cred">
           <text class="ticket-label">账号</text>
@@ -125,7 +125,7 @@
   </view>
 
   <!-- 票根按钮 -->
-  <view class="ticket-stub" wx:if="{{tickets.length > 0}}" bindtap="showTickets">
+  <view class="ticket-stub" wx:if="{{tickets.length > 0}}" bindtap="showTickets" style="{{stubTop > 0 ? 'top: ' + stubTop + 'px;' : ''}}">
     <text class="stub-count">{{tickets.length}}</text>
   </view>
 

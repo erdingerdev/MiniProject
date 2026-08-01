@@ -22,6 +22,9 @@ Page({
     earthTop: 0,
     // 票系统
     tickets: [],
+    stubTop: 0,
+    animShrinkDy: 0,
+    ticketCardStyle: '',
     showTicketList: false,
     ticketListClosing: false,
     removingId: 0,
@@ -37,7 +40,7 @@ Page({
     timeTipText: '',
     ticketAnimPhase: '',
     animTicket: { pool: '', username: '', password: '' },
-    carpoolUnread: 0
+    carpoolUnread: 0,
   },
 
   onLoad() {
@@ -122,27 +125,28 @@ Page({
         return
       }
     }
-    // 支付成功后回到首页，优先出票动画，结束后再加载数据
+    // 先加载数据，再处理出票动画
+    this.loadPasscodeStatus()
+    this.loadInactiveStatus()
+    this.loadSwimSettings()
+    this.loadTickets()
+    // 支付成功后回到首页，优先出票动画
     if (app.globalData.pendingTicket) {
       const ticket = app.globalData.pendingTicket
       app.globalData.pendingTicket = null
-      this.setData({ animTicket: ticket, showTicketAnim: true, ticketAnimPhase: 'print' })
+      // 等渲染完成后获取位置再启动动画
       setTimeout(() => {
-        this.setData({ ticketAnimPhase: 'shrink' })
-      }, 1700)
-      setTimeout(() => {
-        this.setData({ showTicketAnim: false, ticketAnimPhase: '' })
-        this.saveTicket(ticket)
-        this.loadPasscodeStatus()
-        this.loadInactiveStatus()
-        this.loadTickets()
-        this.loadSwimSettings()
-      }, 2700)
-    } else {
-      this.loadPasscodeStatus()
-      this.loadInactiveStatus()
-      this.loadTickets()
-      this.loadSwimSettings()
+        this.updateStubPosition()
+        this.setData({ animTicket: ticket, showTicketAnim: true, ticketAnimPhase: 'print' })
+        setTimeout(() => {
+          this.startShrinkAnim()
+        }, 1700)
+        setTimeout(() => {
+          this.setData({ showTicketAnim: false, ticketAnimPhase: '', ticketCardStyle: '' })
+          this.saveTicket(ticket)
+          this.loadTickets()
+        }, 2700)
+      }, 300)
     }
     this.loadCarpoolUnread()
   },
@@ -231,23 +235,21 @@ Page({
     wx.navigateTo({ url: '/pages/swim/swim' })
   },
 
+  goLeaderboard() {
+    wx.navigateTo({ url: '/pages/leaderboard/leaderboard' })
+  },
+
+  onTitleLongPress() {
+    wx.navigateTo({ url: '/pages/admin/admin' })
+  },
+
   async loadSwimSettings() {
     try {
       const res = await api.getSwimSettingsCB()
       this.setData({ swimEnabled: res.swimEnabled === true })
     } catch {
-      // 查询失败时保守关闭入口
       this.setData({ swimEnabled: false })
     }
-  },
-
-  goLeaderboard() {
-    wx.navigateTo({ url: '/pages/leaderboard/leaderboard' })
-  },
-
-  // ── 标题 8 连击 → 后台管理 ──
-  onTitleLongPress() {
-    wx.navigateTo({ url: '/pages/admin/admin' })
   },
 
   // ── 联系国哥 ──
@@ -264,6 +266,39 @@ Page({
     this.setData({ showQRModal: false })
   },
   noop() {},
+  startShrinkAnim() {
+    const sys = wx.getSystemInfoSync()
+    const rpxRate = 750 / sys.windowWidth
+    // 票根中心水平位置：750rpx - 50rpx = 700rpx，屏幕中心 375rpx，差 325rpx
+    const moveX = 325
+
+    // 查询已渲染的 ticket-card 和 swim-card，计算精确的垂直偏移
+    const query = wx.createSelectorQuery()
+    query.select('.ticket-card').boundingClientRect()
+    query.select('.swim-card').boundingClientRect()
+    query.exec(res => {
+      const ticketCard = res[0]
+      const swimCard = res[1]
+      if (!ticketCard || !swimCard) return
+      // ticket-card 中心 → swim-card 中心
+      const ticketCY = ticketCard.top + ticketCard.height / 2
+      const swimCY = swimCard.top + swimCard.height / 2
+      const dy = Math.round((swimCY - ticketCY) * rpxRate)
+      // 票根 100×100rpx，卡片宽 560rpx 高不定
+      const cardW = ticketCard.width * rpxRate
+      const cardH = ticketCard.height * rpxRate
+      const sx = (100 / cardW).toFixed(4)
+      const sy = (100 / cardH).toFixed(4)
+      this.setData({ ticketAnimPhase: 'shrink', ticketCardStyle: '' })
+      setTimeout(() => {
+        this.setData({ ticketCardStyle: `transition: transform 0.3s ease-out; transform: translateY(${dy}rpx) scaleX(${sx}) scaleY(${sy});` })
+      }, 50)
+      setTimeout(() => {
+        this.setData({ ticketCardStyle: `transition: transform 0.4s ease-in; transform: translate(${moveX}rpx, ${dy}rpx) scaleX(${sx}) scaleY(${sy});` })
+      }, 350)
+    })
+  },
+
   showTimeTip(text) {
     this.setData({ timeTipVisible: true, timeTipOut: false, timeTipText: text })
   },
@@ -332,8 +367,28 @@ Page({
     // 用户票据仅存储于本地缓存
     const now = Date.now()
     tickets = tickets.filter(t => !t.redeemed && now - t.paidAt < 7200000)
-    this.setData({ tickets })
+    this.setData({ tickets }, () => this.updateStubPosition())
     wx.setStorageSync('myTickets', tickets)
+  },
+
+  updateStubPosition() {
+    const sys = wx.getSystemInfoSync()
+    const rpxRate = 750 / sys.windowWidth
+    const stubH = 100 / rpxRate
+
+    const query = wx.createSelectorQuery()
+    query.select('.swim-card').boundingClientRect()
+    query.exec(res => {
+      const card = res[0]
+      if (!card) return
+      // 票根垂直居中于卡片
+      const stubCY = card.top + card.height / 2
+      const stubTop = stubCY - stubH / 2
+      // slot 固定在屏幕垂直中心（top: 50% - 180rpx, height: 360rpx → center = 50%）
+      const slotCY = sys.windowHeight / 2
+      const animShrinkDy = Math.round((stubCY - slotCY) * rpxRate)
+      this.setData({ stubTop, animShrinkDy })
+    })
   },
 
   showTickets() {

@@ -8,14 +8,11 @@ exports.main = async (event) => {
   const wxContext = cloud.getWXContext()
   if (wxContext.OPENID !== ADMIN_OPENID) return { ok: false, error: '无权限' }
 
-  const { status = 'pending', page = 1, pageSize = 20 } = event
-
-  const res = await db.collection('carpool_routes')
+  const { status = 'pending' } = event
+  const res = await db.collection('carpool_station_requests')
     .where({ status })
     .orderBy('createdAt', 'desc')
-    .skip((page - 1) * pageSize)
-    .limit(pageSize)
     .get()
 
-  return { routes: res.data }
+  return { requests: res.data }
 }

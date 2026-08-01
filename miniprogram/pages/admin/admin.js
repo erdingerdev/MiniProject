@@ -1,5 +1,12 @@
 const api = require('../../utils/api')
 
+function formatStamp(ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
 Page({
   data: {
     authed: false,
@@ -12,6 +19,7 @@ Page({
 
     // 站台
     stations: [],
+    stationRequests: [],
     showStationAdd: false,
     newStationName: '',
     newStationDir: '',
@@ -126,7 +134,7 @@ Page({
     const tab = e.currentTarget.dataset.tab
     this.setData({ tab, expandedId: '' })
     if (tab === 'config') this.loadConfig()
-    if (tab === 'stations') this.loadStations()
+    if (tab === 'stations') { this.loadStations(); this.loadStationRequests() }
     if (tab === 'review') this.loadReviewRoutes()
     if (tab === 'passcodes') { this.loadPasscodes(true); this.loadPasscodeCount() }
     if (tab === 'users') { this.loadUsers(true) }
@@ -138,12 +146,12 @@ Page({
   async loadReviewRoutes() {
     wx.showLoading({ title: '加载中...' })
     try {
-      const [pending, reviewed] = await Promise.all([
+      const [pending, approved, rejected] = await Promise.all([
         wx.cloud.callFunction({ name: 'carpoolAdminGetRoutes', data: { status: 'pending' } }),
-        wx.cloud.callFunction({ name: 'carpoolAdminGetRoutes', data: { status: 'approved' } })
+        wx.cloud.callFunction({ name: 'carpoolAdminGetRoutes', data: { status: 'approved' } }),
+        wx.cloud.callFunction({ name: 'carpoolAdminGetRoutes', data: { status: 'rejected' } })
       ])
-      const rejected = await wx.cloud.callFunction({ name: 'carpoolAdminGetRoutes', data: { status: 'rejected' } })
-      const allReviewed = [...(reviewed.result.routes || []), ...(rejected.result.routes || [])]
+      const allReviewed = [...(approved.result.routes || []), ...(rejected.result.routes || [])]
       this.setData({
         reviewRoutes: pending.result.routes || [],
         reviewedRoutes: allReviewed.sort((a, b) => b.createdAt - a.createdAt)
@@ -218,6 +226,38 @@ Page({
     }})
   },
 
+  // ── 站点审核 ──
+  async loadStationRequests() {
+    try {
+      const res = await wx.cloud.callFunction({ name: 'carpoolGetStationRequests', data: { status: 'pending' } })
+      const requests = (res.result.requests || []).map(r => ({
+        ...r,
+        createdAtFormatted: formatStamp(r.createdAt)
+      }))
+      this.setData({ stationRequests: requests })
+    } catch {}
+  },
+
+  async doReviewStation(e) {
+    const { id, action } = e.currentTarget.dataset
+    const label = action === 'approve' ? '通过' : '拒绝'
+    wx.showModal({ title: `确认${label}该站点申请？`, success: async (res) => {
+      if (!res.confirm) return
+      wx.showLoading({ title: `${label}中...` })
+      try {
+        const ret = await wx.cloud.callFunction({ name: 'carpoolReviewStation', data: { requestId: id, action } })
+        wx.hideLoading()
+        if (ret.result.ok) {
+          wx.showToast({ title: `${label}成功`, icon: 'success' })
+          this.loadStationRequests()
+          if (action === 'approve') this.loadStations()
+        } else {
+          wx.showToast({ title: ret.result.error || '操作失败', icon: 'none' })
+        }
+      } catch { wx.hideLoading(); wx.showToast({ title: '操作失败', icon: 'none' }) }
+    }})
+  },
+
   async loadAll() {
     await this.loadConfig()
     await this.loadPasscodes(true)
@@ -241,10 +281,18 @@ Page({
       if (cfg.categories && cfg.categories.length) {
         this.setData({ categories: cfg.categories, categoryCreds: creds, newCodeCategory: cfg.categories[0] })
       }
-      this.setData({
-        qrPreview: (await wx.cloud.callFunction({ name: 'adminUpdateConfig', data: { action: 'getQRUrl', data: {} } })).result.url || '',
-        swimEnabled: cfg.swimEnabled !== false
-      })
+      // QR 链接缓存（getTempFileURL 慢，缓存到过期为止）
+      const qrCache = wx.getStorageSync('admin_qr_cache') || {}
+      const now = Date.now()
+      let qrUrl = ''
+      if (qrCache.url && qrCache.expire > now) {
+        qrUrl = qrCache.url
+      } else {
+        const qrRes = await wx.cloud.callFunction({ name: 'adminUpdateConfig', data: { action: 'getQRUrl', data: {} } })
+        qrUrl = qrRes.result.url || ''
+        if (qrUrl) wx.setStorageSync('admin_qr_cache', { url: qrUrl, expire: now + 7000000 }) // ~2h
+      }
+      this.setData({ qrPreview: qrUrl, swimEnabled: cfg.swimEnabled !== false })
     } catch { /* ignore */ }
   },
 

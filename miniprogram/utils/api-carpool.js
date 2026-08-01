@@ -24,7 +24,12 @@ export function kickPassenger(interactionId) { return call('carpoolKickPassenger
 export function getInteractions() { return call('carpoolGetInteractions') }
 export function markRead(interactionIds) { return call('carpoolMarkRead', { interactionIds }) }
 
+// 站点申请
+export function requestStation(name) { return call('carpoolRequestStation', { name, nickname: app.globalData.nickname, avatar: app.globalData.avatar }) }
+
 // 管理员
 export function adminGetRoutes(status = 'pending', page = 1) { return call('carpoolAdminGetRoutes', { status, page }) }
 export function adminReview(routeId, action, reason) { return call('carpoolAdminReview', { routeId, action, reason }) }
 export function adminStations(action, data) { return call('carpoolAdminStations', { action, ...data }) }
+export function adminGetStationRequests(status = 'pending') { return call('carpoolGetStationRequests', { status }) }
+export function adminReviewStation(requestId, action) { return call('carpoolReviewStation', { requestId, action }) }

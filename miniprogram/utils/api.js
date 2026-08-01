@@ -4,6 +4,23 @@ const BASE = 'https://erdinger.top/api'
 function getDb() { return wx.cloud ? wx.cloud.database() : null }
 function getCmd() { const d = getDb(); return d ? d.command : null }
 
+// 写入打卡记录（每天最多1条，去重）
+async function addCheckinToday(openid, type, peopleCount) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const exist = await getDb().collection('checkins').where({
+    openid,
+    timestamp: getCmd().gte(today.toISOString()).and(getCmd().lt(tomorrow.toISOString()))
+  }).count()
+  if (exist.total > 0) return false
+  await getDb().collection('checkins').add({ data: {
+    openid, type, peopleCount: peopleCount || 1, timestamp: new Date().toISOString()
+  }})
+  return true
+}
+
 function request(method, path, data) {
   return new Promise((resolve, reject) => {
     wx.request({
@@ -104,10 +121,8 @@ const confirmPaymentCB = async (openid, passcodeId, passcodeName, peopleCount, e
     timeStr: extra.timeStr || '',
     type: 'payment', timestamp: new Date().toISOString(), redeemed: false
   }})
-  // 同步写入打卡记录
-  getDb().collection('checkins').add({ data: {
-    openid, type: 'payment', peopleCount, timestamp: new Date().toISOString()
-  }}).catch(() => {})
+  // 同步写入打卡记录（每天最多1条）
+  addCheckinToday(openid, 'payment', peopleCount).catch(() => {})
   return { ok: true, orderId: res._id }
 }
 const getAdminConfigCB = async () => {
@@ -312,9 +327,45 @@ const getLeaderboardCB = async () => {
   })
   return Object.entries(stats).map(([openid, s]) => ({ openid, ...s })).sort((a, b) => b.count - a.count).slice(0, 50)
 }
+// 总打卡次数（轻量，无分页限制）
+const getTotalCheckinCount = async (openid) => {
+  const res = await getDb().collection('checkins').where({ openid }).count()
+  return res.total
+}
+
+// 按月获取打卡记录，每页 20 条循环取全
+const getCheckinsByMonth = async (openid, year, month) => {
+  const start = `${year}-${String(month).padStart(2, '0')}-01`
+  const endMonth = month === 12 ? 1 : month + 1
+  const endYear = month === 12 ? year + 1 : year
+  const end = `${endYear}-${String(endMonth).padStart(2, '0')}-01`
+
+  const all = []
+  let skip = 0
+  const limit = 20
+  while (true) {
+    const res = await getDb().collection('checkins')
+      .where({ openid, timestamp: getCmd().gte(start).and(getCmd().lt(end)) })
+      .orderBy('timestamp', 'desc')
+      .skip(skip).limit(limit).get()
+    all.push(...res.data)
+    if (res.data.length < limit) break
+    skip += limit
+  }
+  const dates = [...new Set(all.map(l => l.timestamp ? l.timestamp.slice(0, 10) : '').filter(Boolean))]
+  const timestamps = all.map(l => l.timestamp)
+  return { dates, timestamps }
+}
+
+// 保留旧接口兼容，内部使用新函数
 const getUserStatsCB = async (openid) => {
-  const res = await getDb().collection('checkins').where({ openid }).orderBy('timestamp', 'desc').limit(500).get()
-  const checkinDates = [...new Set(res.data.map(l => l.timestamp ? l.timestamp.slice(0, 10) : '').filter(Boolean))]
+  const [totalCount, curData, prevData] = await Promise.all([
+    getTotalCheckinCount(openid),
+    getCheckinsByMonth(openid, new Date().getFullYear(), new Date().getMonth() + 1),
+    getCheckinsByMonth(openid, new Date().getFullYear(), new Date().getMonth())
+  ])
+  const checkinDates = [...new Set([...curData.dates, ...prevData.dates])]
+  const timestamps = [...curData.timestamps, ...prevData.timestamps]
   let maxStreak = 0, streak = 0
   const sorted = checkinDates.sort()
   for (let i = 0; i < sorted.length; i++) {
@@ -326,7 +377,7 @@ const getUserStatsCB = async (openid) => {
   if (streak > maxStreak) maxStreak = streak
   const today = new Date().toISOString().slice(0, 10)
   const todayChecked = checkinDates.includes(today)
-  return { checkinDates, totalCount: res.data.length, maxStreak, todayChecked, timestamps: res.data.map(l => l.timestamp) }
+  return { checkinDates, totalCount, maxStreak, todayChecked, timestamps }
 }
 const getUserCheckinsCB = async (openid, skip = 0, limit = 30) => {
   const [orderRes, checkinRes, usageRes] = await Promise.all([
@@ -348,9 +399,8 @@ const getUserCheckinsCB = async (openid, skip = 0, limit = 30) => {
 }
 const manualCheckinCB = async (openid) => {
   if (!getDb()) throw new Error('CloudBase 未初始化')
-  await getDb().collection('checkins').add({ data: {
-    openid, type: 'manual', peopleCount: 1, timestamp: new Date().toISOString()
-  }})
+  const added = await addCheckinToday(openid, 'manual', 1)
+  if (!added) return { ok: false, error: '今天已打卡' }
   return { ok: true }
 }
 const uploadAvatarCB = async (filePath) => {
@@ -536,6 +586,8 @@ module.exports = {
   getFeedbacksCB,
   getLeaderboardCB,
   getUserStatsCB,
+  getTotalCheckinCount,
+  getCheckinsByMonth,
   getUserCheckinsCB,
   manualCheckinCB,
   uploadAvatarCB,

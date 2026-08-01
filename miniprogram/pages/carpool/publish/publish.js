@@ -9,6 +9,7 @@ Page({
 
     type: 'driver',  // driver | passenger
     stations: [],
+    stationsLoading: false,
     countOptions: [1, 2, 3],
 
     // 表单
@@ -28,7 +29,11 @@ Page({
     timeMinuteIndex: 0,
 
     submitting: false,
-    hasExisting: false
+    hasExisting: false,
+
+    // 站点申请
+    showStationModal: false,
+    stationApplyName: ''
   },
 
   onLoad(options) {
@@ -48,10 +53,11 @@ Page({
   },
 
   async loadStations() {
+    this.setData({ stationsLoading: true })
     try {
       const res = await api.getStations()
-      this.setData({ stations: res.stations || [] })
-    } catch {}
+      this.setData({ stations: res.stations || [], stationsLoading: false })
+    } catch { this.setData({ stationsLoading: false }) }
   },
 
   async checkExisting() {
@@ -123,6 +129,29 @@ Page({
       wx.showToast({ title: '网络错误', icon: 'none' })
     }
     this.setData({ submitting: false })
+  },
+
+  // ── 站点申请 ──
+  showStationModal() { this.setData({ showStationModal: true, stationApplyName: '' }) },
+  hideStationModal() { this.setData({ showStationModal: false }) },
+  onStationApplyInput(e) { this.setData({ stationApplyName: e.detail.value }) },
+  async submitStationApply() {
+    const name = this.data.stationApplyName.replace(/[\r\n]/g, '').trim()
+    if (!name) return
+    wx.showLoading({ title: '提交中...' })
+    try {
+      const res = await api.requestStation(name)
+      wx.hideLoading()
+      if (res.ok) {
+        wx.showToast({ title: '申请已提交', icon: 'success' })
+        this.setData({ showStationModal: false })
+      } else {
+        wx.showToast({ title: res.error || '提交失败', icon: 'none' })
+      }
+    } catch (e) {
+      wx.hideLoading()
+      wx.showToast({ title: e.errMsg || e.message || String(e), icon: 'none', duration: 4000 })
+    }
   },
 
   goBack() {

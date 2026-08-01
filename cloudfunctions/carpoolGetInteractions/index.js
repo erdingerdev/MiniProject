@@ -31,13 +31,20 @@ exports.main = async (event) => {
   const unread = toMe.data.filter(i => !i.read).length
 
   // 对于 toMe 的互动，关联对方昵称（已在 interactorNickname 中）
-  // 对于 fromMe 的互动，需要关联路线联系信息
-  const fromMeWithContact = await Promise.all(fromMe.data.map(async (item) => {
-    try {
-      const r = await db.collection('carpool_routes').doc(item.routeId).get()
-      return { ...item, routeContact: r.data ? r.data.contact : '', routeDepartTime: r.data ? r.data.departTime : '', routeNickname: r.data ? r.data.nickname : '' }
-    } catch { return item }
-  }))
+  // 批量查关联的路线联系方式，避免 N+1
+  let fromMeWithContact = fromMe.data
+  if (fromMe.data.length > 0) {
+    const routeIds = [...new Set(fromMe.data.map(i => i.routeId))]
+    const routeMap = {}
+    if (routeIds.length > 0) {
+      const routesRes = await db.collection('carpool_routes').where({ _id: _.in(routeIds) }).get()
+      for (const r of routesRes.data) routeMap[r._id] = r
+    }
+    fromMeWithContact = fromMe.data.map(item => {
+      const r = routeMap[item.routeId]
+      return r ? { ...item, routeContact: r.contact || '', routeDepartTime: r.departTime || '', routeNickname: r.nickname || '' } : item
+    })
+  }
 
   return {
     unreadCount: unread,

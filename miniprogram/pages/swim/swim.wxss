@@ -1,17 +1,41 @@
 .container {
   min-height: 100vh;
   background: var(--bg-gradient, var(--bg));
-  display: flex;
-  justify-content: center;
-  padding: 40rpx;
+  padding: 0 40rpx 40rpx;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
 }
+.container.theme-light { background: linear-gradient(160deg, #016B61 0%, #70B2B2 40%, #9ECFD4 70%, #E5E9C5 100%); }
+
+.theme-dark { color: #e0e0e0; }
+.theme-light { color: #2c2c2c; }
+
+/* 背景光球 */
+/* 自定义导航栏 */
+.nav-bar { position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between; width: 100%; height: 88rpx; margin-bottom: 20rpx; }
+.nav-back { width: 64rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; }
+.nav-back-icon { font-size: 52rpx; color: #e0e0e0; }
+.theme-light .nav-back-icon { color: #fff; }
+.nav-title { font-size: 32rpx; font-weight: 600; color: #e0e0e0; }
+.theme-light .nav-title { color: #fff; }
+.nav-placeholder { width: 64rpx; }
+
+.bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.orb { position: absolute; border-radius: 50%; filter: blur(80rpx); opacity: 0.12; }
+.orb-cyan { width: 400rpx; height: 400rpx; background: #06b6d4; top: -100rpx; right: -100rpx; }
+.orb-purple { width: 300rpx; height: 300rpx; background: #8b5cf6; bottom: -80rpx; left: -80rpx; }
 
 /* ── 中心布局 ── */
 .center-box {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
+  max-width: 600rpx;
+  margin: 0 auto;
   max-width: 600rpx;
   padding-top: 80rpx;
 }
@@ -259,14 +283,16 @@
   border: 1rpx solid var(--border);
   border-radius: 16rpx;
   color: var(--text-dim);
-  font-size: 30rpx;
-  font-weight: 600;
+  font-size: 34rpx;
+  font-weight: 700;
+  box-shadow: 0 0 10rpx rgba(34,211,238,0.3), 0 0 3rpx rgba(34,211,238,0.2);
 }
 .count-chip.active {
-  background: var(--accent-bg);
-  border-color: var(--accent-border);
+  background: rgba(34,211,238,0.25);
+  border-color: rgba(34,211,238,0.4);
   color: var(--accent);
 }
+
 .price-box {
   width: 100%;
   background: rgba(34,211,238,0.06);
@@ -279,8 +305,8 @@
   align-items: center;
 }
 .price-label {
-  font-size: 24rpx;
-  color: var(--text-dim);
+  font-size: 28rpx;
+  color: var(--text);
   margin-bottom: 8rpx;
 }
 .price-total {
@@ -461,8 +487,11 @@
 
 /* ── 浅色模式渐变背景适配 ── */
 .theme-light .hint { color: rgba(255,255,255,0.75); }
-.theme-light .count-chip { color: rgba(255,255,255,0.8); }
-.theme-light .price-label { color: rgba(255,255,255,0.7); }
+.theme-light .count-chip { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.75); box-shadow: 0 0 10rpx rgba(5,209,211,0.3), 0 0 3rpx rgba(5,209,211,0.2); }
+.theme-light .count-chip.active { background: #016B61; border-color: rgba(255,255,255,0.6); color: #22d3ee; font-weight: 700; box-shadow: 0 0 16rpx rgba(1,107,97,0.5), 0 0 6rpx rgba(1,107,97,0.35); }
+.theme-light .price-box { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); }
+.theme-light .price-label { color: rgba(255,255,255,0.85); }
+.theme-light .price-total { color: #fff; text-shadow: 0 1rpx 4rpx rgba(0,0,0,0.15); }
 .theme-light .field-label { color: rgba(255,255,255,0.75); }
 .theme-light .avatar-hint { color: rgba(255,255,255,0.7); }
 .theme-light .cred-label { color: rgba(255,255,255,0.75); }

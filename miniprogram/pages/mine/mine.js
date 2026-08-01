@@ -15,6 +15,8 @@ const MILESTONES = [
   { count: 100, emoji: '🐉', text: '百次入水，浪里白条，水中小白龙' },
 ]
 
+function todayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') }
+
 const COLD_KNOWLEDGE = [
   '游泳一小时消耗的热量 ≈ 两碗半米饭，游完可以理直气壮加餐',
   '水的密度是空气的 800 倍，在水中运动阻力是陆上的 12 倍',
@@ -58,7 +60,10 @@ Page({
     makeupLoading: false,
     checkinDates: [],
     theme: 'dark',
+    statusBarHeight: 0,
     totalCount: 0,
+    monthCache: {},
+    allDates: [],
     monthlyCount: 0,
     maxStreak: 0,
     touchStartX: 0,
@@ -75,25 +80,18 @@ Page({
   },
 
   onLoad() {
+    const sys = wx.getSystemInfoSync()
     const theme = wx.getStorageSync('theme') || 'dark'
-    if (this.data.theme !== theme) this.setData({ theme })
-    wx.setNavigationBarColor({
-      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
-      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
-    })
+    this.setData({ theme, statusBarHeight: sys.statusBarHeight })
   },
 
   onShow() {
     const theme = wx.getStorageSync('theme') || 'dark'
     if (this.data.theme !== theme) this.setData({ theme })
-    wx.setNavigationBarColor({
-      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
-      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
-    })
-    if (!this.data.year) {
-      const now = new Date()
-      this.setData({ year: now.getFullYear(), month: now.getMonth() + 1 })
-    }
+    const now = new Date()
+    const y = now.getFullYear(), m = now.getMonth() + 1
+    this.setData({ year: y, month: m })
+    this.buildDays()
     this.loadStats()
   },
 
@@ -101,28 +99,63 @@ Page({
     const openid = app.globalData.openid
     if (!openid) return
     try {
+      // 总次数（轻量 count）
+      const totalCount = await api.getTotalCheckinCount(openid)
+      // 获取本月+上月数据
       const stats = await api.getUserStatsCB(openid)
       const checkinDates = stats.checkinDates || []
+      const timestamps = stats.timestamps || []
+      const allDates = [...checkinDates]
+
       const today = new Date()
-      const todayStr = today.toISOString().slice(0, 10)
-      const todayChecked = checkinDates.includes(todayStr)
+      const tStr = todayStr()
+      const todayChecked = allDates.includes(tStr)
 
-      const title = this.computeTitle(stats.timestamps || [], checkinDates, stats.totalCount || 0)
-      const summary = this.getOneLineSummary(stats.totalCount || 0, stats.maxStreak || 0, checkinDates, stats.timestamps || [])
+      // 初始化月缓存
+      const now = new Date()
+      const curKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+      const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const prevKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+      const monthCache = this.data.monthCache || {}
+      if (!monthCache[curKey]) monthCache[curKey] = checkinDates
+      if (!monthCache[prevKey]) monthCache[prevKey] = checkinDates
 
-      this.setData({
-        checkinDates,
-        totalCount: stats.totalCount || 0,
-        maxStreak: stats.maxStreak || 0,
-        todayChecked,
-        titleEmoji: title.emoji,
-        titleText: title.text,
-      })
+      const maxStreak = this.computeStreak(allDates)
+      const title = this.computeTitle(timestamps, allDates, totalCount)
+      const summary = this.getOneLineSummary(totalCount, maxStreak, allDates, timestamps)
+
+      this.setData({ checkinDates, allDates, totalCount, maxStreak, todayChecked, monthCache,
+        titleEmoji: title.emoji, titleText: title.text })
       this.buildDays()
-      this.checkPopup(stats.totalCount || 0, todayChecked, summary)
+      this.checkPopup(totalCount, todayChecked, summary)
     } catch (e) {
       console.error('loadStats 失败:', e)
     }
+  },
+
+  computeStreak(dates) {
+    const sorted = [...dates].sort()
+    let maxStreak = 0, streak = 0
+    for (let i = 0; i < sorted.length; i++) {
+      if (i === 0) { streak = 1; continue }
+      const prev = new Date(sorted[i - 1]), curr = new Date(sorted[i])
+      if ((curr - prev) / 86400000 <= 1) streak++
+      else { if (streak > maxStreak) maxStreak = streak; streak = 1 }
+    }
+    if (streak > maxStreak) maxStreak = streak
+    return maxStreak
+  },
+
+  // 按需加载指定月份
+  async ensureMonth(year, month) {
+    const key = `${year}-${String(month).padStart(2, '0')}`
+    if (this.data.monthCache && this.data.monthCache[key]) return
+    const data = await api.getCheckinsByMonth(app.globalData.openid, year, month)
+    const monthCache = { ...this.data.monthCache, [key]: data.dates }
+    const allDates = [...new Set(Object.values(monthCache).flat())]
+    const maxStreak = this.computeStreak(allDates)
+    this.setData({ monthCache, allDates, maxStreak })
+    this.buildDays()
   },
 
   computeTitle(timestamps, checkinDates, totalCount) {
@@ -209,7 +242,7 @@ Page({
   // ── Popup (milestone > knowledge > checked-in, once per day) ──
 
   checkPopup(totalCount, todayChecked, summary) {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayStr()
     const lastPopupDate = wx.getStorageSync('popup_date')
     if (lastPopupDate === today) return
 
@@ -219,6 +252,10 @@ Page({
       const m = MILESTONES[i]
       if (totalCount >= m.count && !shown.includes(m.count)) {
         shown.push(m.count)
+        // 同时标记所有已经达到的更小里程碑，避免下次误弹
+        for (const sm of MILESTONES) {
+          if (sm.count <= totalCount && !shown.includes(sm.count)) shown.push(sm.count)
+        }
         wx.setStorageSync('milestones_shown', shown)
         wx.setStorageSync('popup_date', today)
         this.setData({
@@ -268,9 +305,8 @@ Page({
   // ── Calendar ──
 
   computeDays(year, month) {
-    const { checkinDates } = this.data
-    const today = new Date()
-    const todayStr = today.toISOString().slice(0, 10)
+    const { allDates } = this.data
+    const tStr = todayStr()
 
     const firstDay = new Date(year, month - 1, 1).getDay()
     const daysInMonth = new Date(year, month, 0).getDate()
@@ -279,21 +315,21 @@ Page({
     const daysInPrevMonth = new Date(prevYear, prevMonth, 0).getDate()
 
     const days = []
-    const checkSet = new Set(checkinDates)
+    const checkSet = new Set(allDates)
 
     for (let i = firstDay - 1; i >= 0; i--) {
       const day = daysInPrevMonth - i
       const m = String(prevMonth).padStart(2, '0')
       const d = String(day).padStart(2, '0')
       const dateStr = `${prevYear}-${m}-${d}`
-      days.push({ day, isCurrentMonth: false, isToday: dateStr === todayStr, checked: checkSet.has(dateStr) })
+      days.push({ day, isCurrentMonth: false, isToday: dateStr === tStr, checked: checkSet.has(dateStr) })
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
       const m = String(month).padStart(2, '0')
       const d = String(day).padStart(2, '0')
       const dateStr = `${year}-${m}-${d}`
-      days.push({ day, isCurrentMonth: true, isToday: dateStr === todayStr, checked: checkSet.has(dateStr) })
+      days.push({ day, isCurrentMonth: true, isToday: dateStr === tStr, checked: checkSet.has(dateStr) })
     }
 
     const nextMonth = month === 12 ? 1 : month + 1
@@ -303,7 +339,7 @@ Page({
       const m = String(nextMonth).padStart(2, '0')
       const d = String(nextDay).padStart(2, '0')
       const dateStr = `${nextYear}-${m}-${d}`
-      days.push({ day: nextDay, isCurrentMonth: false, isToday: dateStr === todayStr, checked: checkSet.has(dateStr) })
+      days.push({ day: nextDay, isCurrentMonth: false, isToday: dateStr === tStr, checked: checkSet.has(dateStr) })
       nextDay++
     }
 
@@ -311,11 +347,11 @@ Page({
   },
 
   buildDays() {
-    const { year, month, checkinDates } = this.data
+    const { year, month, allDates } = this.data
     const key = `${year}-${String(month).padStart(2, '0')}`
     this.setData({
       days: this.computeDays(year, month),
-      monthlyCount: checkinDates.filter(d => d.startsWith(key)).length
+      monthlyCount: (allDates || []).filter(d => d.startsWith(key)).length
     })
   },
 
@@ -337,10 +373,21 @@ Page({
     if (newMonth < 1) { newMonth = 12; newYear-- }
     if (newMonth > 12) { newMonth = 1; newYear++ }
 
+    // 往旧月滑且目标月未缓存时，加载目标月 + 再上一个月
+    if (delta < 0) {
+      const key = `${newYear}-${String(newMonth).padStart(2, '0')}`
+      if (!this.data.monthCache || !this.data.monthCache[key]) {
+        this.ensureMonth(newYear, newMonth)
+        // 同时预热再上一个月
+        const ppDate = new Date(newYear, newMonth - 2, 1)
+        this.ensureMonth(ppDate.getFullYear(), ppDate.getMonth() + 1)
+      }
+    }
+
     const nextDays = this.computeDays(newYear, newMonth)
     const dir = delta > 0 ? 'left' : 'right'
     const key = `${newYear}-${String(newMonth).padStart(2, '0')}`
-    const monthlyCount = this.data.checkinDates.filter(d => d.startsWith(key)).length
+    const monthlyCount = this.data.allDates.filter(d => d.startsWith(key)).length
 
     this.setData({ animating: true, animDir: dir, nextDays })
 
@@ -366,23 +413,31 @@ Page({
     this.setData({ makeupLoading: true })
     try {
       await api.manualCheckinCB(openid)
-      // 直接更新本地状态，保证即时生效
-      const today = new Date().toISOString().slice(0, 10)
-      const checkinDates = [...this.data.checkinDates]
-      if (!checkinDates.includes(today)) checkinDates.push(today)
+      // 更新本地状态
+      const today = todayStr()
+      const allDates = [...this.data.allDates]
+      if (!allDates.includes(today)) allDates.push(today)
+      const key = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+      const monthCache = { ...this.data.monthCache }
+      if (monthCache[key] && !monthCache[key].includes(today)) {
+        monthCache[key] = [...monthCache[key], today]
+      }
       this.setData({
         todayChecked: true,
         totalCount: this.data.totalCount + 1,
-        checkinDates,
+        allDates,
+        monthCache,
       })
       this.buildDays()
       wx.showToast({ title: '打卡成功', icon: 'success' })
-      // 后台刷新以同步服务端计算的 maxStreak / title
+      // 后台刷新
       this.loadStats()
     } catch (e) {
       wx.showToast({ title: e.data?.error || '打卡失败', icon: 'none' })
     } finally {
       this.setData({ makeupLoading: false })
     }
-  }
+  },
+
+  goBack() { wx.navigateBack() }
 })

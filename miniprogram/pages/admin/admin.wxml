@@ -92,6 +92,21 @@
 
     <!-- ====== 站台 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='stations'}}">
+      <!-- 待审核站点 -->
+      <view class="section" wx:if="{{stationRequests.length > 0}}">
+        <text class="section-title">待审核站点 ({{stationRequests.length}})</text>
+        <view class="review-item" wx:for="{{stationRequests}}" wx:key="_id">
+          <view class="review-top">
+            <text class="review-line">📍 {{item.name}}</text>
+          </view>
+          <view class="review-sub">{{item.nickname || '匿名'}} · {{item.createdAtFormatted}}</view>
+          <view class="review-actions">
+            <button class="btn-approve" bindtap="doReviewStation" data-id="{{item._id}}" data-action="approve">通过</button>
+            <button class="btn-reject" bindtap="doReviewStation" data-id="{{item._id}}" data-action="reject">拒绝</button>
+          </view>
+        </view>
+      </view>
+
       <view class="section">
         <text class="section-title">站台列表 ({{stations.length}})</text>
         <view class="station-item" wx:for="{{stations}}" wx:key="_id">

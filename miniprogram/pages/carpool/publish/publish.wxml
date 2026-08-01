@@ -26,18 +26,23 @@
     <view class="field-group">
       <text class="field-label">起终点</text>
       <view class="route-picker-row">
-        <picker class="route-picker-wrap" mode="selector" range="{{stations}}" range-key="name" bindchange="onOriginChange" value="{{originIndex}}">
-          <view class="route-picker">{{originIndex >= 0 ? stations[originIndex].name : '起点'}}</view>
+        <picker class="route-picker-wrap" mode="selector" range="{{stations}}" range-key="name" bindchange="onOriginChange" value="{{originIndex}}" disabled="{{stationsLoading}}">
+          <view class="route-picker">{{stationsLoading ? '加载中...' : (originIndex >= 0 ? stations[originIndex].name : '起点')}}</view>
         </picker>
         <view class="route-dash">
           <view class="route-dot"></view>
           <view class="route-line"></view>
           <view class="route-dot"></view>
         </view>
-        <picker class="route-picker-wrap" mode="selector" range="{{stations}}" range-key="name" bindchange="onDestChange" value="{{destIndex}}">
-          <view class="route-picker">{{destIndex >= 0 ? stations[destIndex].name : '终点'}}</view>
+        <picker class="route-picker-wrap" mode="selector" range="{{stations}}" range-key="name" bindchange="onDestChange" value="{{destIndex}}" disabled="{{stationsLoading}}">
+          <view class="route-picker">{{stationsLoading ? '加载中...' : (destIndex >= 0 ? stations[destIndex].name : '终点')}}</view>
         </picker>
       </view>
+    </view>
+
+    <!-- 站点申请入口 -->
+    <view class="station-apply" bindtap="showStationModal">
+      <text class="station-apply-link">没有我的站点，去申请 →</text>
     </view>
 
     <!-- 出发时间 -->
@@ -76,5 +81,17 @@
     </view>
 
     <button class="submit-btn" bindtap="submit" disabled="{{submitting}}">发布</button>
+  </view>
+
+  <!-- 站点申请弹窗 -->
+  <view class="modal-overlay" wx:if="{{showStationModal}}" bindtap="hideStationModal">
+    <view class="modal-card" catchtap="noop">
+      <text class="modal-title">申请新站点</text>
+      <input class="field" placeholder="请输入想申请的站点名称" value="{{stationApplyName}}" bindinput="onStationApplyInput" maxlength="16"/>
+      <view class="modal-btns">
+        <button class="btn-cancel" bindtap="hideStationModal">取消</button>
+        <button class="btn-confirm" bindtap="submitStationApply" disabled="{{!stationApplyName}}">确认</button>
+      </view>
+    </view>
   </view>
 </view>

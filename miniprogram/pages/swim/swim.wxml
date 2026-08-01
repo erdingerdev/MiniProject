@@ -1,4 +1,16 @@
 <view class="container theme-{{theme}}">
+  <!-- 背景光球 -->
+  <view class="bg-layer">
+    <view class="orb orb-cyan"></view>
+    <view class="orb orb-purple"></view>
+  </view>
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+    <text class="nav-title">获取游泳票</text>
+    <view class="nav-placeholder"></view>
+  </view>
 
   <!-- 状态: 加载中 -->
   <view class="center-box" wx:if="{{status === 'loading'}}">
@@ -58,7 +70,10 @@
     <text class="title">选择 <text class="pool-highlight">{{passcodeCategory}}</text> 入场人数</text>
     <text class="hint">请选择本次需要入场的人数</text>
     <view class="count-row">
-      <view class="count-chip {{peopleCount===item?'active':''}}" wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" bindtap="selectCount" data-count="{{item}}">{{item}}</view>
+      <view class="count-chip {{peopleCount===item?'active':''}}" wx:for="{{[1,2,3,4,5]}}" wx:key="*this" bindtap="selectCount" data-count="{{item}}">{{item}}</view>
+    </view>
+    <view class="count-row">
+      <view class="count-chip {{peopleCount===item?'active':''}}" wx:for="{{[6,7,8,9,10]}}" wx:key="*this" bindtap="selectCount" data-count="{{item}}">{{item}}</view>
     </view>
     <view class="price-box">
       <text class="price-label">单价 {{unitPrice}} 元 × {{peopleCount}} 人</text>

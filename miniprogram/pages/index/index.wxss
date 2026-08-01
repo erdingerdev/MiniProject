@@ -26,14 +26,12 @@
 .orb-cyan {
   width: 400rpx; height: 400rpx;
   top: 10%; left: -100rpx;
-  background: rgba(6, 182, 212, 0.4);
-  animation: float-cyan 8s ease-in-out infinite alternate;
+  background: rgba(6, 182, 212, 0.7);
 }
 .orb-purple {
   width: 360rpx; height: 360rpx;
   bottom: 20%; right: -80rpx;
-  background: rgba(139, 92, 246, 0.3);
-  animation: float-purple 10s ease-in-out infinite alternate;
+  background: rgba(139, 92, 246, 0.6);
 }
 @keyframes float-cyan {
   0% { transform: translate(0, 0); }
@@ -349,24 +347,9 @@
   overflow: visible;
 }
 
-/* 收缩动画：缩小并飞向票根位置 */
+/* 收缩阶段：槽位允许溢出，重置动画让 inline transition 生效 */
 .ticket-card.shrink {
-  animation: ticket-shrink 1s ease-in forwards;
-}
-
-@keyframes ticket-shrink {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  30% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(300rpx, 520rpx) scale(0.18);
-    opacity: 1;
-  }
+  animation: none;
 }
 
 .ticket-pool {
@@ -392,7 +375,7 @@
 .ticket-stub {
   position: fixed;
   right: 0;
-  bottom: calc(180rpx + env(safe-area-inset-bottom));
+  top: 480rpx;
   width: 100rpx;
   height: 100rpx;
   background: linear-gradient(160deg, #6b4e3d 0%, #5a4fa0 60%, #3a3a52 100%);
@@ -701,13 +684,14 @@
   line-height: 1.4;
 }
 
-/* ── 用户状态（独立，不影响头像位置） ── */
+/* ── 用户状态（绝对定位，不影响页面布局） ── */
 .user-status {
-  position: relative;
+  position: absolute;
   z-index: 10;
-  width: 100%;
-  padding-left: 0;
-  margin-top: -8rpx;
+  left: 48rpx;
+  right: 48rpx;
+  top: 160rpx;
+  pointer-events: none;
 }
 
 /* ── 标题 ── */
@@ -721,13 +705,13 @@
   display: block;
   font-size: 72rpx;
   font-weight: 700;
-  background: linear-gradient(90deg, var(--accent), #60a5fa, #a78bfa, var(--accent));
+  background: linear-gradient(135deg, #06b6d4, #818cf8, #c084fc, #f472b6, #c084fc, #818cf8, #06b6d4);
   background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   margin-bottom: 24rpx;
-  animation: marquee 3s linear infinite;
+  animation: marquee 8s linear infinite;
   filter: drop-shadow(0 0 32rpx rgba(34, 211, 238, 0.25));
 }
 @keyframes marquee {
@@ -743,6 +727,15 @@
 .theme-light .card,
 .theme-light .card-half { background: rgba(255,255,255,0.45); }
 .theme-light .user-name { color: rgba(255,255,255,0.85); }
+.theme-light .hero-title {
+  background: linear-gradient(135deg, #F83600, #F98512, #F9D423, #F98512, #F83600);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: marquee 8s linear infinite;
+  filter: drop-shadow(0 0 24rpx rgba(249,133,18,0.35));
+}
 .theme-light .hero-sub {
   color: rgba(255,255,255,0.75);
 }
@@ -1050,7 +1043,6 @@
   top: 0; left: 0; right: 0; bottom: 0;
   z-index: 999;
   pointer-events: none;
-  overflow: hidden;
 }
 
 .transit-ball {

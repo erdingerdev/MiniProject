@@ -6,6 +6,7 @@ Page({
     theme: 'dark',
     statusBarHeight: 0,
     navBarHeight: 0,
+    navBarTotalHeight: 0,
 
     // 我的路线
     myRoute: null,
@@ -30,16 +31,20 @@ Page({
     showContact: false,
     contactText: '',
     inviteSent: false,
+    isOwnRoute: false,
     cancelRouteId: ''
   },
 
   onLoad() {
     const sys = wx.getSystemInfoSync()
     const theme = wx.getStorageSync('theme') || 'dark'
+    const navBarTotal = sys.statusBarHeight + 44 + 8
+    const rpxRate = sys.windowWidth / 750
     this.setData({
       theme,
       statusBarHeight: sys.statusBarHeight,
-      navBarHeight: sys.statusBarHeight + 44
+      navBarHeight: sys.statusBarHeight + 44,
+      navBarTotalHeight: navBarTotal + 40 * rpxRate
     })
   },
 
@@ -102,20 +107,30 @@ Page({
     wx.stopPullDownRefresh()
   },
 
+  onReachBottom() {
+    this.loadMore()
+  },
+
   // ── 弹窗详情 ──
   showRouteDetail(e) {
     const route = e.currentTarget.dataset.route
+    // 自己的路线 → 展示详情但不显示交互按钮
+    const isMine = this.data.myRoute && this.data.myRoute._id === route._id
+    if (isMine) {
+      this.setData({ showDetail: true, detailRoute: route, showContact: false, inviteSent: false, isOwnRoute: true })
+      return
+    }
     // 已互动过 → 直接展示联系方式
     const alreadyInteracted = this.data.interactedRouteIds.indexOf(route._id) >= 0
     if (alreadyInteracted) {
       const intItem = (this.data.interactionsFromMe || []).find(i => i.routeId === route._id)
       if (intItem && intItem.type === 'invite') {
-        this.setData({ showDetail: true, detailRoute: route, showContact: true, inviteSent: true })
+        this.setData({ showDetail: true, detailRoute: route, showContact: true, inviteSent: true, isOwnRoute: false })
       } else {
-        this.setData({ showDetail: true, detailRoute: route, showContact: true, contactText: intItem ? intItem.routeContact : '' })
+        this.setData({ showDetail: true, detailRoute: route, showContact: true, contactText: intItem ? intItem.routeContact : '', isOwnRoute: false })
       }
     } else {
-      this.setData({ showDetail: true, detailRoute: route, showContact: false, contactText: '', inviteSent: false })
+      this.setData({ showDetail: true, detailRoute: route, showContact: false, contactText: '', inviteSent: false, isOwnRoute: false })
     }
   },
   closeDetail() {

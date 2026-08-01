@@ -12,69 +12,66 @@
     <view class="nav-placeholder"></view>
   </view>
 
-  <!-- 我的路线 -->
-  <view class="my-section" wx:if="{{myRoute}}">
-    <view class="my-header">
-      <view class="my-badge {{myRoute.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{myRoute.type === 'driver' ? '找人' : '找车'}}</view>
-      <view class="my-status {{myRoute.status}}">{{myRoute.status === 'pending' ? '审核中' : myRoute.status === 'approved' ? '已通过' : '已拒绝'}}</view>
-    </view>
-    <view class="my-reject-reason" wx:if="{{myRoute.status === 'rejected' && myRoute.rejectReason}}">拒绝原因：{{myRoute.rejectReason}}</view>
-
-    <view class="my-route-line">{{myRoute.origin}}  →  {{myRoute.destination}}</view>
-
-    <view class="my-meta">
-      <text class="my-meta-item">出发时间 {{myRoute.departTime}}</text>
-      <text class="my-meta-item">{{myRoute.type === 'driver' ? '可乘人数' : '通勤人数'}} {{myRoute.peopleCount}}人</text>
-    </view>
-    <view class="my-meta my-contact">
-      <text class="my-meta-item">联系方式 {{myRoute.contact}}</text>
-    </view>
-
-    <view class="my-note" wx:if="{{myRoute.note}}">
-      <text class="my-note-text">备注 {{myRoute.note}}</text>
-    </view>
-
-    <view class="my-remind" wx:if="{{myRoute.status === 'pending'}}">
-      <button class="remind-btn" bindtap="remindReview" disabled="{{reviewReminded}}">{{reviewReminded ? '已提醒' : '提醒审核'}}</button>
-    </view>
-
-    <!-- 车主：乘客列表 -->
-    <view class="my-passengers" wx:if="{{myRoute.type === 'driver' && myInteractions.length > 0}}">
-      <text class="section-label">加入列表</text>
-      <view class="passenger-item" wx:for="{{myInteractions}}" wx:key="_id" wx:if="{{item.type === 'join'}}">
-        <text class="passenger-name">{{item.interactorNickname}}</text>
-        <text class="passenger-remove" bindtap="kickPassenger" data-id="{{item._id}}">移除</text>
+    <view style="height: {{navBarTotalHeight}}px;"></view>
+    <!-- 我的路线 -->
+    <view class="my-section {{myRoute.expired ? 'my-expired' : ''}}" wx:if="{{myRoute}}" >
+      <view class="my-header">
+        <view class="my-badge {{myRoute.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{myRoute.type === 'driver' ? '找人' : '找车'}}</view>
+        <view class="my-status {{myRoute.expired ? 'expired' : myRoute.status}}">{{myRoute.expired ? '已过期' : (myRoute.status === 'pending' ? '审核中' : myRoute.status === 'approved' ? '已通过' : '已拒绝')}}</view>
+      </view>
+      <view class="my-reject-reason" wx:if="{{myRoute.status === 'rejected' && myRoute.rejectReason}}">拒绝原因：{{myRoute.rejectReason}}</view>
+      <view class="my-route-line">
+        <view class="route-stop">起点：{{myRoute.origin}}</view>
+        <view class="route-stop">终点：{{myRoute.destination}}</view>
+      </view>
+      <view class="my-meta">
+        <text class="my-meta-item">出发时间 {{myRoute.departTime}}</text>
+        <text class="my-meta-item">{{myRoute.type === 'driver' ? '可坐人数' : '通勤人数'}} {{myRoute.peopleCount}}人</text>
+      </view>
+      <view class="my-meta my-contact">
+        <text class="my-meta-item">联系方式 {{myRoute.contact}}</text>
+      </view>
+      <view class="my-note" wx:if="{{myRoute.note}}">
+        <text class="my-note-text">备注 {{myRoute.note}}</text>
+      </view>
+      <view class="my-remind" wx:if="{{myRoute.status === 'pending'}}">
+        <button class="remind-btn" bindtap="remindReview" disabled="{{reviewReminded}}">{{reviewReminded ? '已提醒' : '提醒审核'}}</button>
+      </view>
+      <view class="my-passengers" wx:if="{{myRoute.type === 'driver' && myInteractions.length > 0}}">
+        <text class="section-label">加入列表</text>
+        <view class="passenger-item" wx:for="{{myInteractions}}" wx:key="_id" wx:if="{{item.type === 'join'}}">
+          <text class="passenger-name">{{item.interactorNickname}}</text>
+          <text class="passenger-remove" bindtap="kickPassenger" data-id="{{item._id}}">移除</text>
+        </view>
+      </view>
+      <view class="my-passengers" wx:if="{{myRoute.type === 'passenger' && myInteractions.length > 0}}">
+        <text class="section-label">司机邀请</text>
+        <view class="passenger-item invite-item" wx:for="{{myInteractions}}" wx:key="_id" wx:if="{{item.type === 'invite'}}" bindtap="showRouteContact" data-item="{{item}}">
+          <text class="passenger-name">{{item.interactorNickname}}</text>
+          <text class="passenger-arrow">›</text>
+        </view>
+      </view>
+      <view class="my-actions">
+        <button class="my-delete-btn" bindtap="deleteMyRoute">删除发布</button>
       </view>
     </view>
 
-    <!-- 乘客：邀请列表 -->
-    <view class="my-passengers" wx:if="{{myRoute.type === 'passenger' && myInteractions.length > 0}}">
-      <text class="section-label">司机邀请</text>
-      <view class="passenger-item invite-item" wx:for="{{myInteractions}}" wx:key="_id" wx:if="{{item.type === 'invite'}}" bindtap="showRouteContact" data-item="{{item}}">
-        <text class="passenger-name">{{item.interactorNickname}}</text>
-        <text class="passenger-arrow">›</text>
-      </view>
+    <!-- 分割线 -->
+    <view class="divider" wx:if="{{myRoute}}">
+      <view class="divider-line"></view>
+      <text class="divider-text">全部路线</text>
+      <view class="divider-line"></view>
     </view>
 
-    <view class="my-actions">
-      <button class="my-delete-btn" bindtap="deleteMyRoute">删除发布</button>
-    </view>
-  </view>
-
-  <!-- 分割线 -->
-  <view class="divider" wx:if="{{myRoute}}">
-    <view class="divider-line"></view>
-    <text class="divider-text">全部路线</text>
-    <view class="divider-line"></view>
-  </view>
-
-  <!-- 路线列表 -->
-  <view class="route-list">
-    <view class="route-item" wx:for="{{routes}}" wx:key="_id" wx:if="{{!myRoute || item._id !== myRoute._id}}" bindtap="showRouteDetail" data-route="{{item}}">
+    <!-- 路线列表 -->
+    <view class="route-item" wx:for="{{routes}}" wx:key="_id" bindtap="showRouteDetail" data-route="{{item}}">
       <view class="route-left">
         <view class="route-type {{item.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{item.type === 'driver' ? '找人' : '找车'}}</view>
         <view class="route-info">
-          <text class="route-line">{{item.origin}} → {{item.destination}}</text>
+          <view class="route-line">
+            <view class="route-stop">起点：{{item.origin}}</view>
+            <view class="route-stop">终点：{{item.destination}}</view>
+          </view>
           <text class="route-sub">出发 {{item.departTime}} · {{item.peopleCount}}人</text>
         </view>
       </view>
@@ -88,7 +85,11 @@
       <text class="empty-text">暂无路线，发布第一条吧</text>
     </view>
 
-    <text class="load-more" wx:if="{{!noMore}}" bindtap="loadMore">加载更多</text>
+    <view class="load-more" wx:if="{{loading}}">加载中...</view>
+    <view class="load-more" wx:elif="{{noMore && routes.length > 0}}">没有更多了</view>
+
+  <view class="footer-note">
+    <text>本平台仅提供路线信息展示，请自行注意安全，双方自行联系并承担相应风险</text>
   </view>
 
   <!-- 详情弹窗 -->
@@ -98,14 +99,18 @@
 
       <block wx:if="{{detailRoute}}">
         <view class="modal-route-type {{detailRoute.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{detailRoute.type === 'driver' ? '找人' : '找车'}}</view>
-        <text class="modal-route">{{detailRoute.origin}} → {{detailRoute.destination}}</text>
+        <text class="badge-self" wx:if="{{isOwnRoute}}">自己</text>
+        <view class="modal-route">
+          <view class="route-stop">起点：{{detailRoute.origin}}</view>
+          <view class="route-stop">终点：{{detailRoute.destination}}</view>
+        </view>
         <view class="modal-fields">
           <text class="modal-field">出发时间：{{detailRoute.departTime}}</text>
-          <text class="modal-field">人数：{{detailRoute.peopleCount}}人</text>
+          <text class="modal-field">{{detailRoute.type === 'driver' ? '可坐人数' : '通勤人数'}}：{{detailRoute.peopleCount}}人</text>
           <text class="modal-field" wx:if="{{detailRoute.note}}">备注：{{detailRoute.note}}</text>
         </view>
 
-        <view class="modal-contact" wx:if="{{showContact}}">
+        <view class="modal-contact" wx:if="{{showContact && !isOwnRoute}}">
           <view wx:if="{{inviteSent}}" bindtap="cancelInvite">
             <text class="invite-sent-text">已将您的邀请发送给对方</text>
             <text class="invite-cancel-hint">点击取消邀请</text>
@@ -120,10 +125,10 @@
           </block>
         </view>
 
-        <button class="modal-btn" wx:if="{{!showContact}}" bindtap="doInteract">
+        <button class="modal-btn" wx:if="{{!showContact && !isOwnRoute}}" bindtap="doInteract">
           {{detailRoute.type === 'driver' ? '我想加入' : '我想邀请'}}
         </button>
-        <text class="modal-hint" wx:if="{{!showContact}}">
+        <text class="modal-hint" wx:if="{{!showContact && !isOwnRoute}}">
           {{detailRoute.type === 'driver' ? '确认后可查看联系方式' : '确认后对方可查看你的联系方式'}}
         </text>
       </block>
@@ -139,11 +144,6 @@
         </view>
       </block>
     </view>
-  </view>
-
-  <!-- 免责声明 -->
-  <view class="footer-note">
-    <text>本平台仅提供路线信息展示，请自行注意安全，双方自行联系并承担相应风险</text>
   </view>
 
   <!-- 发布悬浮按钮 -->

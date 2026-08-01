@@ -14,6 +14,8 @@ function formatTime(d) {
 Page({
   data: {
     status: 'loading',
+    statusBarHeight: 0,
+    navBarHeight: 0,
     codeName: '',
     errorMsg: '',
     passcodeId: '',
@@ -37,11 +39,12 @@ Page({
   },
 
   onLoad(options) {
+    const sys = wx.getSystemInfoSync()
     const theme = wx.getStorageSync('theme') || 'dark'
-    if (this.data.theme !== theme) this.setData({ theme })
-    wx.setNavigationBarColor({
-      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
-      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
+    this.setData({
+      theme,
+      statusBarHeight: sys.statusBarHeight,
+      navBarHeight: sys.statusBarHeight + 44
     })
     this._from = options.from || ''
   },
@@ -49,10 +52,6 @@ Page({
   async onShow() {
     const theme = wx.getStorageSync('theme') || 'dark'
     if (this.data.theme !== theme) this.setData({ theme })
-    wx.setNavigationBarColor({
-      frontColor: theme === 'dark' ? '#ffffff' : '#000000',
-      backgroundColor: theme === 'dark' ? '#080b11' : '#442E9A'
-    })
     if (['loading', 'needLogin', 'needPasscode', 'needProfile'].includes(this.data.status)) {
       await this.initFlow()
     }
@@ -367,6 +366,7 @@ Page({
     this.setData({ timeTipOut: true })
     setTimeout(() => this.setData({ timeTipVisible: false, timeTipOut: false }), 280)
   },
+  goBack() { wx.navigateBack() },
   noop() {},
 
   // ── 切换泳池 ──

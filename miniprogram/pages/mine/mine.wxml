@@ -1,4 +1,17 @@
 <view class="container theme-{{theme}}">
+  <!-- 背景光球 -->
+  <view class="bg-layer">
+    <view class="orb orb-cyan"></view>
+    <view class="orb orb-purple"></view>
+  </view>
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+    <text class="nav-title">我的</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
   <!-- 弹窗 (里程碑 / 冷知识 / 已打卡) -->
   <view class="milestone-overlay" wx:if="{{showPopup}}" bindtap="closePopup">
     <view class="milestone-card" catchtap="noop">
