@@ -56,12 +56,13 @@
   <!-- 标题 -->
   <view class="hero">
     <text class="hero-title" bindtap="onToggleTheme" bindlongpress="onTitleLongPress">得闲意</text>
-    <text class="hero-sub">行到水穷处，坐看云起时</text>
+    <text class="hero-sub">{{heroSubText}}<text class="hero-cursor">{{heroCursor}}</text></text>
   </view>
 
   <!-- 入口宫格 -->
   <view class="grid">
     <view class="card swim-card" style="animation-delay: 0.1s" bindtap="goSwim">
+      <view class="promo-corner" wx:if="{{promoActive}}">惠</view>
       <view class="card-icon">🏊</view>
       <text class="card-title">获取游泳票</text>
       <text class="card-desc">通行码验证 · 获取入场凭证</text>
@@ -70,7 +71,7 @@
       <view class="card card-half" bindtap="goHub">
         <view class="card-icon">🏪</view>
         <text class="card-title">驿站</text>
-        <text class="card-desc">通勤公告 · 更多功能</text>
+        <text class="card-desc">结伴通勤 · 更多功能</text>
         <view class="card-badge" wx:if="{{carpoolUnread}}">{{carpoolUnread > 99 ? '99+' : carpoolUnread}}</view>
       </view>
       <view class="card card-half" style="animation-delay: 0.4s" bindtap="showContactQR">
@@ -121,6 +122,13 @@
       <text class="qr-modal-title">长按联系国哥</text>
       <image class="qr-modal-img" src="{{contactQRUrl}}" mode="widthFix" show-menu-by-longpress="{{true}}" wx:if="{{contactQRUrl}}"/>
       <view class="qr-placeholder" wx:else>加载中...</view>
+    </view>
+  </view>
+
+  <!-- 活动弹窗 -->
+  <view class="promo-modal" wx:if="{{showPromo}}" bindtap="hidePromo">
+    <view class="promo-card" catchtap="onPromoTap">
+      <image class="promo-img" src="{{promoImage}}" mode="widthFix" wx:if="{{promoImage}}"/>
     </view>
   </view>
 

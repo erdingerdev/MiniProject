@@ -76,8 +76,12 @@
       <view class="count-chip {{peopleCount===item?'active':''}}" wx:for="{{[6,7,8,9,10]}}" wx:key="*this" bindtap="selectCount" data-count="{{item}}">{{item}}</view>
     </view>
     <view class="price-box">
+      <view class="price-promo" wx:if="{{promoActive}}">
+        <text class="price-original">¥{{originalUnitPrice}}</text>
+        <text class="promo-tag">{{promoTitle}}</text>
+      </view>
       <text class="price-label">单价 {{unitPrice}} 元 × {{peopleCount}} 人</text>
-      <text class="price-total">合计 {{totalPrice}} 元</text>
+      <text class="price-total">合计 {{displayPrice}} 元<text class="price-cursor" wx:if="{{displayPrice !== totalPrice}}">_</text></text>
     </view>
     <button class="btn-primary" bindtap="confirmPeople">确认支付 {{totalPrice}} 元</button>
     <text class="mine-link" bindtap="goMine">查看打卡记录 →</text>

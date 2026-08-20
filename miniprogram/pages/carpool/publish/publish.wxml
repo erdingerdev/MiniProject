@@ -8,7 +8,7 @@
   <!-- 导航栏 -->
   <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
     <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
-    <text class="nav-title">{{type === 'driver' ? '我是车主' : '我找车'}}</text>
+    <text class="nav-title">{{type === 'driver' ? '找伙伴' : '找位子'}}</text>
     <view class="nav-placeholder"></view>
   </view>
 
@@ -17,17 +17,17 @@
     <view class="field-group">
       <text class="field-label">发布类型</text>
       <view class="type-row">
-        <view class="type-chip {{type === 'driver' ? 'active' : ''}}" bindtap="switchType" data-type="driver">🚗 我车有空位(找人)</view>
-        <view class="type-chip {{type === 'passenger' ? 'active' : ''}}" bindtap="switchType" data-type="passenger">🧑 我想找顺路(找车)</view>
+        <view class="type-chip {{type === 'driver' ? 'active' : ''}}" bindtap="switchType" data-type="driver">🤝 找伙伴</view>
+        <view class="type-chip {{type === 'passenger' ? 'active' : ''}}" bindtap="switchType" data-type="passenger">🧑 找位子</view>
       </view>
     </view>
 
     <!-- 起终点 -->
     <view class="field-group">
-      <text class="field-label">起终点</text>
+      <text class="field-label">在哪去哪</text>
       <view class="route-picker-row">
         <picker class="route-picker-wrap" mode="selector" range="{{stations}}" range-key="name" bindchange="onOriginChange" value="{{originIndex}}" disabled="{{stationsLoading}}">
-          <view class="route-picker">{{stationsLoading ? '加载中...' : (originIndex >= 0 ? stations[originIndex].name : '起点')}}</view>
+          <view class="route-picker">{{stationsLoading ? '加载中...' : (originIndex >= 0 ? stations[originIndex].name : '我在这')}}</view>
         </picker>
         <view class="route-dash">
           <view class="route-dot"></view>
@@ -35,7 +35,7 @@
           <view class="route-dot"></view>
         </view>
         <picker class="route-picker-wrap" mode="selector" range="{{stations}}" range-key="name" bindchange="onDestChange" value="{{destIndex}}" disabled="{{stationsLoading}}">
-          <view class="route-picker">{{stationsLoading ? '加载中...' : (destIndex >= 0 ? stations[destIndex].name : '终点')}}</view>
+          <view class="route-picker">{{stationsLoading ? '加载中...' : (destIndex >= 0 ? stations[destIndex].name : '想要去')}}</view>
         </picker>
       </view>
     </view>
@@ -57,7 +57,7 @@
 
     <!-- 人数 -->
     <view class="field-group">
-      <text class="field-label">{{type === 'driver' ? '可带人数' : '通勤人数'}}</text>
+      <text class="field-label">{{type === 'driver' ? '可结伴 · 人' : '我这有 · 人'}}</text>
       <view class="count-row">
         <view class="count-chip {{peopleCount === item ? 'active' : ''}}" wx:for="{{countOptions}}" wx:key="*this" bindtap="onCountChange" data-value="{{item}}">{{item}}</view>
       </view>

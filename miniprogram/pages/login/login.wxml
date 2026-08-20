@@ -1,0 +1,48 @@
+<view class="container theme-{{theme}}">
+  <!-- 背景光球 -->
+  <view class="bg-layer">
+    <view class="orb orb-cyan"></view>
+    <view class="orb orb-purple"></view>
+  </view>
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+    <text class="nav-title">登录</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 状态: 需要登录 -->
+  <view class="center-box" wx:if="{{status === 'needLogin'}}">
+    <view class="icon-lg">👤</view>
+    <text class="title">需要登录</text>
+    <text class="hint">点击登录后将获取你的微信头像和昵称</text>
+    <button class="btn-primary" bindtap="handleLogin">微信登录</button>
+  </view>
+
+  <!-- 状态: 确认资料 -->
+  <view class="center-box" wx:elif="{{status === 'needProfile'}}">
+    <view class="icon-lg">👤</view>
+    <text class="title">设置资料</text>
+    <text class="hint">请点击获取微信头像和昵称</text>
+
+    <view class="avatar-section">
+      <view class="avatar-wrap">
+        <image class="avatar-preview" src="{{tempAvatar}}" mode="aspectFit" wx:if="{{tempAvatar}}"/>
+        <view class="avatar-empty" wx:else>
+          <text class="avatar-plus">+</text>
+        </view>
+        <button class="avatar-picker" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"></button>
+      </view>
+      <text class="avatar-hint" wx:if="{{!tempAvatar}}">点击获取头像</text>
+      <text class="avatar-hint" wx:else>点击更换头像</text>
+    </view>
+
+    <view class="field-group">
+      <text class="field-label">昵称</text>
+      <input class="input-code nickname-input" type="nickname" placeholder="点击获取微信昵称" value="{{tempNickname}}" bindinput="onNicknameInput" bindblur="onNicknameBlur"/>
+    </view>
+
+    <button class="btn-primary" bindtap="finishProfile">确认</button>
+  </view>
+</view>

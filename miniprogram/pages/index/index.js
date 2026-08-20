@@ -35,12 +35,17 @@ Page({
     redeemRemainCount: '',
     showQRModal: false,
     contactQRUrl: '',
+    showPromo: false,
+    promoImage: '',
+    promoActive: false,
     timeTipVisible: false,
     timeTipOut: false,
     timeTipText: '',
     ticketAnimPhase: '',
     animTicket: { pool: '', username: '', password: '' },
     carpoolUnread: 0,
+    heroSubText: '行到水穷处，坐看云起时',
+    heroCursor: '',
   },
 
   onLoad() {
@@ -53,6 +58,28 @@ Page({
     })
     this.genStarDots()
     this.genEarthPos()
+    this.startHeroTyping()
+  },
+
+  // ── 副标题打字动画（首次初始化执行一次）──
+  startHeroTyping() {
+    if (wx.getStorageSync('hero_typed') === '1') {
+      this.setData({ heroSubText: '行到水穷处，坐看云起时', heroCursor: '' })
+      return
+    }
+    const full = '行到水穷处，坐看云起时'
+    let i = 0
+    this.setData({ heroSubText: '', heroCursor: '_' })
+    this._typeTimer = setInterval(() => {
+      i++
+      this.setData({ heroSubText: full.slice(0, i) })
+      if (i >= full.length) {
+        clearInterval(this._typeTimer)
+        this._typeTimer = null
+        this.setData({ heroCursor: '' })
+        wx.setStorageSync('hero_typed', '1')
+      }
+    }, 120)
   },
 
   genEarthPos() {
@@ -232,7 +259,39 @@ Page({
       wx.showToast({ title: '系统维护中，请直接联系国哥', icon: 'none', duration: 2500 })
       return
     }
+    if (!app.globalData.openid) {
+      wx.navigateTo({ url: '/pages/login/login?from=swim' })
+      return
+    }
     wx.navigateTo({ url: '/pages/swim/swim' })
+  },
+
+  // ── 活动弹窗 ──
+  checkPromo(promo) {
+    const active = api.isPromoActive(promo)
+    this.setData({ promoActive: active })
+    if (!active) return
+    if (!promo.image) return
+    // 同一活动只弹一次
+    const key = 'promo_seen_' + (promo.title || 'default')
+    if (wx.getStorageSync(key) === '1') return
+    wx.setStorageSync(key, '1')
+    // 图片 fileID 转临时链接
+    if (promo.image.startsWith('cloud://')) {
+      wx.cloud.getTempFileURL({ fileList: [promo.image] }).then(res => {
+        const url = res.fileList && res.fileList[0] && res.fileList[0].tempFileURL
+        if (url) this.setData({ showPromo: true, promoImage: url })
+      }).catch(() => {})
+    } else {
+      this.setData({ showPromo: true, promoImage: promo.image })
+    }
+  },
+  hidePromo() {
+    this.setData({ showPromo: false })
+  },
+  onPromoTap() {
+    this.hidePromo()
+    this.goSwim()
   },
 
   goLeaderboard() {
@@ -247,6 +306,7 @@ Page({
     try {
       const res = await api.getSwimSettingsCB()
       this.setData({ swimEnabled: res.swimEnabled === true })
+      this.checkPromo(res.promo)
     } catch {
       this.setData({ swimEnabled: false })
     }

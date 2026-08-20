@@ -8,7 +8,7 @@ exports.main = async (event) => {
   const now = Date.now()
 
   const res = await db.collection('carpool_routes')
-    .where({ status: 'approved', expiresAt: _.gt(now) })
+    .where({ status: 'approved' /* , expiresAt: _.gt(now) */ })
     .orderBy('createdAt', 'desc')
     .skip((page - 1) * pageSize)
     .limit(pageSize)

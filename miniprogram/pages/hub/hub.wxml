@@ -19,10 +19,10 @@
   <view class="menu-list">
     <view class="menu-item" bindtap="goCarpool">
       <view class="menu-left">
-        <view class="menu-icon">🚗</view>
+        <view class="menu-icon">🤝</view>
         <view class="menu-info">
-          <text class="menu-title">通勤公告栏</text>
-          <text class="menu-desc">顺路通勤 · 找人找车</text>
+          <text class="menu-title">结伴通勤</text>
+          <text class="menu-desc">通勤路上 · 不再无聊</text>
         </view>
       </view>
       <view class="menu-right">

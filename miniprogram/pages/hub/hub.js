@@ -41,10 +41,18 @@ Page({
   },
 
   goCarpool() {
+    if (!app.globalData.openid) {
+      wx.navigateTo({ url: '/pages/login/login?from=carpool' })
+      return
+    }
     wx.navigateTo({ url: '/pages/carpool/list/list' })
   },
 
   goFeedback() {
+    if (!app.globalData.openid) {
+      wx.navigateTo({ url: '/pages/login/login?from=feedback' })
+      return
+    }
     wx.navigateTo({ url: '/pages/feedback/feedback' })
   }
 })

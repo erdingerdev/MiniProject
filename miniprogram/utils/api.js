@@ -62,20 +62,42 @@ const getSwimSettingsCB = async () => {
   const res = await wx.cloud.callFunction({ name: 'getSwimSettings2' })
   return res.result
 }
+// 判断活动是否生效（YYYY-MM-DD 字符串比较，天然无时区问题）
+function isPromoActive(promo) {
+  if (!promo || !promo.enabled) return false
+  if (!promo.startAt || !promo.endAt) return false
+  const now = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+  return today >= promo.startAt && today <= promo.endAt
+}
 const getBindStatusCB = async (openid) => {
   if (!getDb()) throw new Error('CloudBase 未初始化')
   const userRes = await getDb().collection('app_users').where({ _openid: openid }).get()
   const ids = (userRes.data[0] && userRes.data[0].boundPasscodeIds) || []
-  if (ids.length === 0) return { bound: false, passcodes: [], validCount: 0 }
+  if (ids.length === 0) return { bound: false, passcodes: [], validCount: 0, promo: null }
   const pcRes = await getDb().collection('passcodes').where({ _id: getCmd().in(ids) }).get()
   const cfgRes = await getDb().collection('app_config').doc('config').get()
   const creds = cfgRes.data.categoryCredentials || {}
+  const promo = cfgRes.data.promo || null
+  const promoActive = isPromoActive(promo)
   const passcodes = pcRes.data.filter(p => !p.deleted).map(p => {
     const meta = creds[p.category] || {}
     const valid = !(p.expireAt && new Date(p.expireAt) < new Date()) && !(p.maxUses > 0 && (p.usageCount || 0) >= p.maxUses)
-    return { id: p._id, name: p.name, category: p.category, valid, unitPrice: meta.unitPrice || 22.98 }
+    const originalPrice = meta.unitPrice || 22.98
+    let unitPrice = originalPrice
+    if (promoActive) {
+      const pp = Number(promo.price)
+      if (pp >= 19.98 && pp <= 23 && pp < originalPrice) unitPrice = pp
+    }
+    return { id: p._id, name: p.name, category: p.category, valid, unitPrice, originalPrice }
   })
-  return { bound: passcodes.some(p => p.valid), passcodes, validCount: passcodes.filter(p => p.valid).length }
+  return {
+    bound: passcodes.some(p => p.valid),
+    passcodes,
+    validCount: passcodes.filter(p => p.valid).length,
+    promo: promoActive ? { title: promo.title, price: promo.price } : null
+  }
 }
 const getCredentialsCB = async (passcodeId, openid) => {
   if (!getDb()) throw new Error('CloudBase 未初始化')
@@ -562,6 +584,7 @@ module.exports = {
   },
   getUserPasscodeStatusCB,
   getSwimSettingsCB,
+  isPromoActive,
   getBindStatusCB,
   getCredentialsCB,
   bindPasscodeCB,

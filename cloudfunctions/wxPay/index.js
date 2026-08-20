@@ -1,5 +1,7 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
+const db = cloud.database()
+const _ = db.command
 
 const MCHID = '1748358912'
 const APPID = 'wxbcd464dd28d81bc1'
@@ -36,7 +38,26 @@ function truncateBytes(str, maxBytes) {
 exports.main = async (event, context) => {
   const { openid, amount, nickname, pool, peopleCount } = event
   // 微信支付 body 限制 128 字节，留余量截断
-  let description = sanitize(`${nickname || '用户'}【${pool || '游泳'}】x${peopleCount || 1}人`)
+  let nick = sanitize(nickname || '')
+  if (!nick) {
+    // 反查通行码兜底
+    try {
+      const user = await db.collection('app_users').where({ _openid: openid }).get()
+      const ids = user.data[0]?.boundPasscodeIds || []
+      if (ids.length > 0) {
+        const pcs = await db.collection('passcodes').where({
+          _id: _.in(ids),
+          category: pool,
+          deleted: false
+        }).get()
+        if (pcs.data.length > 0) {
+          nick = `[${pcs.data[0].name}]用户`
+        }
+      }
+    } catch {}
+    if (!nick) nick = pool ? `[${pool}]用户` : '用户'
+  }
+  let description = `${nick}【${pool || '游泳'}】x${peopleCount || 1}人`
   description = truncateBytes(description, 120)
 
   // 生成订单号

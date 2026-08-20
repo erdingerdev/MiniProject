@@ -230,6 +230,27 @@
   border-radius: 12rpx;
 }
 
+/* ── 活动弹窗 ── */
+.promo-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 750;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.promo-card {
+  width: 560rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 0 40rpx rgba(0,0,0,0.4);
+}
+.promo-img {
+  width: 100%;
+  display: block;
+}
+
 /* ── 出票动画 ── */
 /* 遮罩背景（独立，淡出不影子女） */
 .ticket-overlay-bg {
@@ -723,9 +744,32 @@
   color: var(--text-dim);
   letter-spacing: 4rpx;
 }
+.hero-cursor {
+  color: rgba(34,211,238,0.6);
+  animation: cursor-blink 1s steps(1) infinite;
+}
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 
 .theme-light .card,
 .theme-light .card-half { background: rgba(255,255,255,0.45); }
+.theme-light .card-title { text-shadow: none; }
+/* 浅色模式：顶部亮线 */
+.theme-light .card { border-top: 2rpx solid rgba(248,54,0,0.7); }
+.theme-light .card-half { border-top: 2rpx solid rgba(248,54,0,0.6); }
+/* 浅色模式：按下发光 */
+.theme-light .card:active {
+  box-shadow: 0 0 6rpx rgba(255,255,255,0.8), 0 0 16rpx rgba(248,54,0,0.7), 0 0 40rpx rgba(249,133,18,0.5);
+  border-color: rgba(248,54,0,0.6);
+  border-top-color: #F83600;
+}
+.theme-light .card-half:active {
+  box-shadow: 0 0 5rpx rgba(255,255,255,0.7), 0 0 12rpx rgba(248,54,0,0.6), 0 0 32rpx rgba(249,133,18,0.4);
+  border-color: rgba(248,54,0,0.5);
+  border-top-color: #F83600;
+}
 .theme-light .user-name { color: rgba(255,255,255,0.85); }
 .theme-light .hero-title {
   background: linear-gradient(135deg, #F83600, #F98512, #F9D423, #F98512, #F83600);
@@ -767,6 +811,7 @@
   animation: card-in 0.6s ease-out forwards;
   position: relative;
   overflow: hidden;
+  border-top: 2rpx solid rgba(34,211,238,0.55);
 }
 @keyframes card-in {
   from {
@@ -779,10 +824,19 @@
   }
 }
 .card:active {
-  background: rgba(6,182,212,0.1);
-  border-color: var(--accent-border);
+  box-shadow: 0 0 8rpx rgba(34,211,238,0.7), 0 0 24rpx rgba(6,182,212,0.5), 0 0 48rpx rgba(34,211,238,0.25), 0 0 72rpx rgba(129,140,248,0.12);
+  border-color: rgba(34,211,238,0.5);
+  border-top-color: rgba(34,211,238,0.8);
   transform: scale(0.96) !important;
 }
+.card-half:active {
+  box-shadow: 0 0 6rpx rgba(34,211,238,0.6), 0 0 18rpx rgba(6,182,212,0.4), 0 0 36rpx rgba(34,211,238,0.2);
+  border-color: rgba(34,211,238,0.45);
+  border-top-color: rgba(34,211,238,0.7);
+  transform: scale(0.96) !important;
+  border-radius: 24rpx;
+}
+/* ── 跑马灯（获取游泳票按钮）── */
 /* ── 卡片行 ── */
 .card-row {
   display: flex;
@@ -798,12 +852,14 @@
   animation: none;
   opacity: 1;
   transform: none;
+  border-top: 2rpx solid rgba(34,211,238,0.45);
 }
 
 .card-icon { font-size: 56rpx; margin-bottom: 24rpx; position: relative; z-index: 1; }
-.card-title { font-size: 32rpx; font-weight: 600; color: var(--text); margin-bottom: 12rpx; position: relative; z-index: 1; }
+.card-title { font-size: 32rpx; font-weight: 600; color: var(--text); margin-bottom: 12rpx; position: relative; z-index: 1; text-shadow: 0 0 10rpx rgba(34,211,238,0.35); }
 .card-desc { font-size: 24rpx; color: var(--text-dim); position: relative; z-index: 1; }
 .card-badge { position: absolute; top: 12rpx; right: 12rpx; min-width: 36rpx; height: 36rpx; line-height: 36rpx; text-align: center; font-size: 20rpx; font-weight: 700; color: #fff; background: #ef4444; border-radius: 18rpx; padding: 0 8rpx; z-index: 2; }
+.promo-corner { position: absolute; top: 0; left: 80rpx; height: 104rpx; line-height: 81rpx; text-align: center; font-size: 36rpx; font-weight: 700; color: #fff; background: linear-gradient(135deg, #fb923c, #f97316); padding: 0 24rpx 0 20rpx; z-index: 2; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%); }
 .card-clock {
   position: absolute;
   top: -48rpx; left: -32rpx; right: -32rpx; bottom: -48rpx;

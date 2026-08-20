@@ -15,7 +15,8 @@ exports.main = async (event, context) => {
       ...cfg.swimConfig,
       categories: cfg.categories || [],
       categoryCredentials: cfg.categoryCredentials || {},
-      adminPassword: cfg.adminPassword || ''
+      adminPassword: cfg.adminPassword || '',
+      promo: cfg.promo || null
     }
   }
 }

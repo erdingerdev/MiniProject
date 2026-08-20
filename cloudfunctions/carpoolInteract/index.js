@@ -11,10 +11,10 @@ exports.main = async (event) => {
 
   // 查目标路线
   const routeRes = await db.collection('carpool_routes').doc(routeId).get()
-  if (!routeRes.data) return { ok: false, error: '路线不存在' }
+  if (!routeRes.data) return { ok: false, error: '帖子不存在' }
   const route = routeRes.data
-  if (route.openid === uid) return { ok: false, error: '不能操作自己的路线' }
-  if (route.status !== 'approved') return { ok: false, error: '路线暂不可用' }
+  if (route.openid === uid) return { ok: false, error: '不能操作自己的帖子' }
+  if (route.status !== 'approved') return { ok: false, error: '帖子暂不可用' }
 
   // 查自己的路线
   const myRes = await db.collection('carpool_routes').where({ openid: uid }).get()
@@ -22,10 +22,10 @@ exports.main = async (event) => {
 
   if (route.type === 'driver') {
     // 按钮「我想加入」，乘客点车主帖
-    if (myRoute && myRoute.type === 'driver') return { ok: false, error: '需发布通勤找车' }
+    if (myRoute && myRoute.type === 'driver') return { ok: false, error: '需发布找位子帖子' }
   } else {
     // 按钮「我想邀请」，车主点乘客帖
-    if (!myRoute || myRoute.type !== 'driver') return { ok: false, error: '需发布通勤找人' }
+    if (!myRoute || myRoute.type !== 'driver') return { ok: false, error: '需发布找伙伴帖子' }
   }
 
   // 检查是否已交互过
@@ -48,7 +48,7 @@ exports.main = async (event) => {
     const seatRes = await db.collection('carpool_interactions')
       .where({ routeId, type: 'join' })
       .count()
-    if (seatRes.total >= (route.peopleCount || 3)) return { ok: false, error: '车主已满员' }
+    if (seatRes.total >= (route.peopleCount || 3)) return { ok: false, error: '已成团' }
   } else {
     // 车主最多同时5个邀请
     const invCount = await db.collection('carpool_interactions')

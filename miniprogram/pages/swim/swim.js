@@ -26,7 +26,11 @@ Page({
     tempNickname: '',
     peopleCount: 1,
     unitPrice: '22.98',
+    originalUnitPrice: '22.98',
     totalPrice: '22.98',
+    displayPrice: '22.98',
+    promoActive: false,
+    promoTitle: '',
     passcodes: [],
     selectedPasscodeId: '',
     showPoolPicker: false,
@@ -94,19 +98,7 @@ Page({
         // 优先恢复上次选中的通行证
         const savedId = wx.getStorageSync('selectedPasscodeId')
         let selected = validPasscodes.find(p => p.id === savedId) || validPasscodes[0]
-        const price = String(selected.unitPrice)
-        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
-        this.setData({
-          _realUnitPrice: price,
-          passcodes: st.passcodes,
-          selectedPasscodeId: selected.id,
-          passcodeId: selected.id,
-          passcodeName: selected.name,
-          passcodeCategory: selected.category,
-          unitPrice: price,
-          totalPrice: total,
-          status: 'choosePeople'
-        })
+        this.setData({ ...this.passcodeData(selected, st.passcodes, st), status: 'choosePeople' })
 
       } else {
         this.setData({ status: 'needPasscode' })
@@ -206,18 +198,7 @@ Page({
         }
         const savedId = wx.getStorageSync('selectedPasscodeId')
         const selected = validPasscodes.find(p => p.id === savedId) || validPasscodes[0]
-        const price = String(selected.unitPrice)
-        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
-        this.setData({
-          passcodes: st.passcodes,
-          selectedPasscodeId: selected.id,
-          passcodeId: selected.id,
-          passcodeName: selected.name,
-          passcodeCategory: selected.category,
-          _realUnitPrice: price, unitPrice: price,
-          totalPrice: total,
-          status: 'choosePeople'
-        })
+        this.setData({ ...this.passcodeData(selected, st.passcodes, st), status: 'choosePeople' })
 
         return
       }
@@ -243,21 +224,8 @@ Page({
       if (res.passcodes && res.passcodes.length > 0) {
         const validPasscodes = res.passcodes.filter(p => p.valid)
         const selected = validPasscodes.length > 0 ? validPasscodes[0] : res.passcodes[0]
-        const price = String(selected.unitPrice)
-        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
         wx.setStorageSync('selectedPasscodeId', selected.id)
-        this.setData({
-          passcodes: res.passcodes,
-          selectedPasscodeId: selected.id,
-          passcodeId: selected.id,
-          passcodeName: selected.name,
-          passcodeCategory: selected.category,
-          _realUnitPrice: price, unitPrice: price,
-          totalPrice: total,
-          status: 'choosePeople',
-          codeName: '',
-          errorMsg: ''
-        })
+        this.setData({ ...this.passcodeData(selected, res.passcodes, res), status: 'choosePeople', codeName: '', errorMsg: '' })
 
       } else {
         this.setData({
@@ -272,12 +240,47 @@ Page({
     }
   },
 
+  // ── 应用选中的通行码：计算价格、活动信息 ──
+  passcodeData(selected, passcodes, st) {
+    const price = String(selected.unitPrice)
+    const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
+    return {
+      _realUnitPrice: price,
+      passcodes,
+      selectedPasscodeId: selected.id,
+      passcodeId: selected.id,
+      passcodeName: selected.name,
+      passcodeCategory: selected.category,
+      unitPrice: price,
+      originalUnitPrice: String(selected.originalPrice ?? selected.unitPrice),
+      promoActive: !!(st && st.promo),
+      promoTitle: (st && st.promo) ? st.promo.title : '',
+      totalPrice: total,
+      displayPrice: total
+    }
+  },
+
   // ── 选择人数 ──
   selectCount(e) {
     const count = e.currentTarget.dataset.count
     const price = String(this.data._realUnitPrice || this.data.unitPrice)
     const total = (count * parseFloat(price)).toFixed(2)
     this.setData({ peopleCount: count, unitPrice: price, totalPrice: total })
+    this.typePrice(total)
+  },
+
+  typePrice(text) {
+    if (this._typeTimer) clearInterval(this._typeTimer)
+    let i = 0
+    this.setData({ displayPrice: '' })
+    this._typeTimer = setInterval(() => {
+      i++
+      this.setData({ displayPrice: text.slice(0, i) })
+      if (i >= text.length) {
+        clearInterval(this._typeTimer)
+        this._typeTimer = null
+      }
+    }, 100)
   },
 
   async confirmPeople() {
@@ -395,7 +398,9 @@ Page({
       passcodeName: passcode.name,
       passcodeCategory: passcode.category,
       _realUnitPrice: price, unitPrice: price,
+      originalUnitPrice: String(passcode.originalPrice ?? passcode.unitPrice),
       totalPrice: total,
+      displayPrice: total,
       showPoolPicker: false
     })
   },
@@ -439,20 +444,8 @@ Page({
       if (res.passcodes && res.passcodes.length > 0) {
         const validPasscodes = res.passcodes.filter(p => p.valid)
         const selected = validPasscodes.length > 0 ? validPasscodes[0] : res.passcodes[0]
-        const price = String(selected.unitPrice)
-        const total = (this.data.peopleCount * parseFloat(price)).toFixed(2)
         wx.setStorageSync('selectedPasscodeId', selected.id)
-        this.setData({
-          passcodes: res.passcodes,
-          selectedPasscodeId: selected.id,
-          passcodeId: selected.id,
-          passcodeName: selected.name,
-          passcodeCategory: selected.category,
-          _realUnitPrice: price, unitPrice: price,
-          totalPrice: total,
-          showBindDialog: false,
-          newBindCodeName: ''
-        })
+        this.setData({ ...this.passcodeData(selected, res.passcodes, res), showBindDialog: false, newBindCodeName: '' })
         wx.showToast({ title: '绑定成功', icon: 'success' })
       }
     } catch (e) {

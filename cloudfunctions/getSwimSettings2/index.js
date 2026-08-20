@@ -4,5 +4,8 @@ const db = cloud.database()
 
 exports.main = async (event, context) => {
   const cfg = await db.collection('app_config').doc('config').get()
-  return { swimEnabled: (cfg.data.swimConfig && cfg.data.swimConfig.swimEnabled !== false) }
+  return {
+    swimEnabled: (cfg.data.swimConfig && cfg.data.swimConfig.swimEnabled !== false),
+    promo: cfg.data.promo || null
+  }
 }

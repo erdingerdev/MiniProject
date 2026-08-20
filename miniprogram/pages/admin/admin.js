@@ -36,6 +36,14 @@ Page({
     newAdminPwd: '',
     swimEnabled: true,
     theme: 'dark',
+    // 活动
+    promoTitle: '',
+    promoPrice: '',
+    promoStartAt: '',
+    promoEndAt: '',
+    promoEnabled: false,
+    promoImage: '',
+    promoPreview: '',
 
     // 通行码
     passcodes: [],
@@ -293,6 +301,22 @@ Page({
         if (qrUrl) wx.setStorageSync('admin_qr_cache', { url: qrUrl, expire: now + 7000000 }) // ~2h
       }
       this.setData({ qrPreview: qrUrl, swimEnabled: cfg.swimEnabled !== false })
+      // 活动配置
+      const promo = cfg.promo || null
+      this.setData({
+        promoTitle: promo ? promo.title : '',
+        promoPrice: promo ? String(promo.price) : '',
+        promoStartAt: promo ? promo.startAt : '',
+        promoEndAt: promo ? promo.endAt : '',
+        promoEnabled: promo ? !!promo.enabled : false,
+        promoImage: promo ? promo.image : ''
+      })
+      if (promo && promo.image) {
+        try {
+          const imgRes = await wx.cloud.getTempFileURL({ fileList: [promo.image] })
+          if (imgRes.fileList && imgRes.fileList[0]) this.setData({ promoPreview: imgRes.fileList[0].tempFileURL })
+        } catch {}
+      }
     } catch { /* ignore */ }
   },
 
@@ -306,6 +330,61 @@ Page({
     } catch {
       this.setData({ swimEnabled: !enabled })
       wx.showToast({ title: '切换失败', icon: 'none' })
+    }
+  },
+
+  // ── 活动设置 ──
+  onPromoTitle(e) { this.setData({ promoTitle: e.detail.value }) },
+  onPromoPrice(e) { this.setData({ promoPrice: e.detail.value }) },
+  onPromoStartAt(e) { this.setData({ promoStartAt: e.detail.value }) },
+  onPromoEndAt(e) { this.setData({ promoEndAt: e.detail.value }) },
+  onPromoToggle(e) { this.setData({ promoEnabled: e.detail.value }) },
+  async onPickPromoImage() {
+    const res = await wx.chooseImage({ count: 1, sizeType: ['compressed'], sourceType: ['album', 'camera'] })
+    if (!res.tempFilePaths || res.tempFilePaths.length === 0) return
+    wx.showLoading({ title: '上传中...' })
+    try {
+      const uploadRes = await wx.cloud.uploadFile({ cloudPath: 'promo/promo-' + Date.now() + '.jpg', filePath: res.tempFilePaths[0] })
+      const urlRes = await wx.cloud.getTempFileURL({ fileList: [uploadRes.fileID] })
+      wx.hideLoading()
+      this.setData({ promoImage: uploadRes.fileID, promoPreview: urlRes.fileList[0].tempFileURL })
+    } catch {
+      wx.hideLoading()
+      wx.showToast({ title: '上传失败', icon: 'none' })
+    }
+  },
+  async savePromo() {
+    const { promoTitle, promoPrice, promoStartAt, promoEndAt, promoEnabled, promoImage } = this.data
+    if (!promoTitle.trim()) { wx.showToast({ title: '请填活动标题', icon: 'none' }); return }
+    const price = Number(promoPrice)
+    if (!promoPrice || isNaN(price) || price < 19.98 || price > 23) {
+      wx.showToast({ title: '活动价需在 19.98~23 之间', icon: 'none' }); return
+    }
+    if (!promoStartAt || !promoEndAt) { wx.showToast({ title: '请选起止日期', icon: 'none' }); return }
+    if (promoStartAt > promoEndAt) { wx.showToast({ title: '开始日期不能晚于结束日期', icon: 'none' }); return }
+    wx.showLoading({ title: '保存中...' })
+    try {
+      await wx.cloud.callFunction({
+        name: 'adminUpdateConfig',
+        data: {
+          action: 'updateConfig',
+          data: {
+            promo: {
+              title: promoTitle.trim(),
+              price,
+              startAt: promoStartAt,
+              endAt: promoEndAt,
+              enabled: promoEnabled,
+              image: promoImage
+            }
+          }
+        }
+      })
+      wx.hideLoading()
+      wx.showToast({ title: '已保存', icon: 'success' })
+    } catch {
+      wx.hideLoading()
+      wx.showToast({ title: '保存失败', icon: 'none' })
     }
   },
 

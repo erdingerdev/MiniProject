@@ -22,6 +22,7 @@ exports.main = async (event, context) => {
     if (data.guideText !== undefined) updates['swimConfig.guideText'] = data.guideText
     if (data.paymentQR !== undefined) updates['swimConfig.paymentQR'] = data.paymentQR
     if (data.qrFileID !== undefined) updates['swimConfig.qrFileID'] = data.qrFileID
+    if (data.promo !== undefined) updates['promo'] = data.promo
     await db.collection('app_config').doc('config').update({ data: updates })
     return { ok: true }
   }

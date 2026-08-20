@@ -12,10 +12,10 @@ exports.main = async (event) => {
   if (res.data.length === 0) return { route: null }
 
   const route = res.data[0]
-  // 标记是否过期
-  if (route.expiresAt && route.expiresAt <= Date.now() && route.status === 'approved') {
-    route.expired = true
-  }
+  // 标记是否过期（暂关：数据少先不过期）
+  // if (route.expiresAt && route.expiresAt <= Date.now() && route.status === 'approved') {
+  //   route.expired = true
+  // }
   // 查询关联互动
   const interactions = await db.collection('carpool_interactions')
     .where({ routeId: route._id })

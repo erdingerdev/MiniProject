@@ -269,7 +269,7 @@
 .count-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
+  gap: 28rpx;
   justify-content: center;
   margin-bottom: 32rpx;
 }
@@ -286,11 +286,15 @@
   font-size: 34rpx;
   font-weight: 700;
   box-shadow: 0 0 10rpx rgba(34,211,238,0.3), 0 0 3rpx rgba(34,211,238,0.2);
+  transition: all 0.2s;
 }
 .count-chip.active {
   background: rgba(34,211,238,0.25);
   border-color: rgba(34,211,238,0.4);
+  border-top: 2rpx solid rgba(34,211,238,0.7);
   color: var(--accent);
+  font-size: 40rpx;
+  filter: drop-shadow(0 0 8rpx rgba(34,211,238,0.5));
 }
 
 .price-box {
@@ -304,6 +308,26 @@
   flex-direction: column;
   align-items: center;
 }
+.price-promo {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+.price-original {
+  font-size: 26rpx;
+  color: rgba(148,163,184,0.75);
+  text-decoration: line-through;
+}
+.promo-tag {
+  font-size: 22rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #f43f5e, #fb7185);
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  font-weight: 600;
+  line-height: 1.5;
+}
 .price-label {
   font-size: 28rpx;
   color: var(--text);
@@ -313,6 +337,14 @@
   font-size: 44rpx;
   font-weight: 700;
   color: var(--accent);
+}
+.price-cursor {
+  color: rgba(34,211,238,0.6);
+  animation: cursor-blink 1s steps(1) infinite;
+}
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 /* ── 切换泳池浮动按钮 ── */

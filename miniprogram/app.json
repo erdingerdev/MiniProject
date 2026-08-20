@@ -9,6 +9,7 @@
     "pages/contact/contact",
     "pages/feedback/feedback",
     "pages/hub/hub",
+    "pages/login/login",
     "pages/carpool/list/list",
     "pages/carpool/publish/publish"
   ],

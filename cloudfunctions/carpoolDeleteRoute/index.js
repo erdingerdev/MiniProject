@@ -12,7 +12,7 @@ exports.main = async (event) => {
   if (!uid) return { ok: false, error: '未登录' }
 
   const res = await db.collection('carpool_routes').where({ openid: uid }).get()
-  if (res.data.length === 0) return { ok: false, error: '你还没有发布路线' }
+  if (res.data.length === 0) return { ok: false, error: '你还没有发布帖子' }
 
   // 检查每日次数
   const today = new Date()

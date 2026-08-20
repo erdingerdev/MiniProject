@@ -11,8 +11,8 @@ exports.main = async (event) => {
   const wxContext = cloud.getWXContext()
   const uid = openid || wxContext.OPENID
   const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
-  const typeText = type === 'driver' ? '找人' : '找车'
-  let content = `【新路线待审核】\n用户：${nickname || '未知'}\n类型：${typeText}\n路线：${origin} → ${destination}\n出发：${departTime}\n人数：${peopleCount || 1}人`
+  const typeText = type === 'driver' ? '找伙伴' : '找位子'
+  let content = `【新帖待审核】\n用户：${nickname || '未知'}\n类型：${typeText}\n区间：${origin} → ${destination}\n出发：${departTime}\n人数：${peopleCount || 1}人`
   if (note) content += `\n备注：${note}`
   content += `\n时间：${now}`
 

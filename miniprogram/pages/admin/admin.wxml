@@ -74,6 +74,27 @@
         <text class="switch-hint" wx:if="{{!swimEnabled}}">关闭后用户点击获取游泳票将提示系统维护中</text>
       </view>
 
+      <!-- 活动设置 -->
+      <view class="section">
+        <text class="section-title">活动设置</text>
+        <view class="switch-row">
+          <text class="switch-label">{{promoEnabled ? '活动开启' : '活动关闭'}}</text>
+          <switch checked="{{promoEnabled}}" bindchange="onPromoToggle" color="#f43f5e"/>
+        </view>
+        <input class="field" placeholder="活动标题（如：七夕特惠）" value="{{promoTitle}}" bindinput="onPromoTitle"/>
+        <input class="field" placeholder="活动价（20~23）" type="digit" value="{{promoPrice}}" bindinput="onPromoPrice"/>
+        <picker class="field picker-field" mode="date" value="{{promoStartAt}}" bindchange="onPromoStartAt" end="2100-12-31">
+          <view class="picker-text">{{promoStartAt || '开始日期'}}</view>
+        </picker>
+        <picker class="field picker-field" mode="date" value="{{promoEndAt}}" bindchange="onPromoEndAt" end="2100-12-31">
+          <view class="picker-text">{{promoEndAt || '结束日期'}}</view>
+        </picker>
+        <image class="preview-qr" src="{{promoPreview}}" mode="widthFix" wx:if="{{promoPreview}}"/>
+        <view class="qr-empty" wx:else>未上传弹窗图片</view>
+        <button class="btn-sm" bindtap="onPickPromoImage">上传弹窗图片</button>
+        <button class="btn-sm" bindtap="savePromo" style="margin-top:16rpx">保存活动设置</button>
+      </view>
+
       <!-- 收款码 -->
       <view class="section">
         <text class="section-title">收款码</text>
@@ -139,28 +160,28 @@
     <!-- ====== 审核 Tab ====== -->
     <view class="tab-content" wx:if="{{tab==='review'}}">
       <view class="section">
-        <text class="section-title">待审核路线 ({{reviewRoutes.length}})</text>
+        <text class="section-title">待审核帖子 ({{reviewRoutes.length}})</text>
         <view class="review-item" wx:for="{{reviewRoutes}}" wx:key="_id">
           <view class="review-top">
-            <view class="review-badge {{item.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{item.type === 'driver' ? '找人' : '找车'}}</view>
+            <view class="review-badge {{item.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{item.type === 'driver' ? '找伙伴' : '找位子'}}</view>
             <view class="review-line">{{item.nickname}} · {{item.origin}} → {{item.destination}}</view>
           </view>
-          <view class="review-sub">出发时间 {{item.departTime}} · {{item.type === 'driver' ? '可乘人数' : '通勤人数'}} {{item.peopleCount}}人 · 联系方式 {{item.contact}}</view>
+          <view class="review-sub">出发时间 {{item.departTime}} · {{item.type === 'driver' ? '可结伴' : '我这有'}} {{item.peopleCount}}人 · 联系方式 {{item.contact}}</view>
           <view class="review-sub" wx:if="{{item.note}}">备注 {{item.note}}</view>
           <view class="review-actions">
             <button class="btn-approve" bindtap="doReviewRoute" data-id="{{item._id}}" data-action="approve">通过</button>
             <button class="btn-reject" bindtap="doReviewRoute" data-id="{{item._id}}" data-action="reject">拒绝</button>
           </view>
         </view>
-        <view class="empty" wx:if="{{reviewRoutes.length===0}}">暂无待审核路线</view>
+        <view class="empty" wx:if="{{reviewRoutes.length===0}}">暂无待审核帖子</view>
       </view>
 
       <!-- 已审核 -->
       <view class="section">
-        <text class="section-title">已审核路线</text>
+        <text class="section-title">已审核帖子</text>
         <view class="review-item done" wx:for="{{reviewedRoutes}}" wx:key="_id">
           <view class="review-top">
-            <view class="review-badge {{item.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{item.type === 'driver' ? '找人' : '找车'}}</view>
+            <view class="review-badge {{item.type === 'driver' ? 'badge-driver' : 'badge-passenger'}}">{{item.type === 'driver' ? '找伙伴' : '找位子'}}</view>
             <view class="review-line">{{item.nickname}} · {{item.origin}} → {{item.destination}}</view>
           </view>
           <view class="review-sub">出发时间 {{item.departTime}} · {{item.status === 'approved' ? '已通过' : '已拒绝'}}</view>
