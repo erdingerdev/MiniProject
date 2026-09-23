@@ -23,5 +23,6 @@
 .theme-light .empty-text { color: #3a6a64; }
 
 /* 悬浮按钮 */
-.fab { position: fixed; right: 40rpx; bottom: 120rpx; width: 96rpx; height: 96rpx; border-radius: 48rpx; background: #34d399; display: flex; align-items: center; justify-content: center; z-index: 50; box-shadow: 0 8rpx 24rpx rgba(52,211,153,0.3); }
-.fab-icon { font-size: 48rpx; color: #1a1a1a; font-weight: 300; line-height: 1; }
+.fab { position: fixed; right: 40rpx; bottom: 120rpx; height: 96rpx; padding: 0 36rpx; border-radius: 48rpx; background: #34d399; display: flex; align-items: center; justify-content: center; gap: 12rpx; z-index: 50; box-shadow: 0 8rpx 24rpx rgba(52,211,153,0.3); }
+.fab-icon { font-size: 36rpx; color: #1a1a1a; line-height: 1; }
+.fab-text { font-size: 28rpx; font-weight: 600; color: #1a1a1a; }
