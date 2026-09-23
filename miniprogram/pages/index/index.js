@@ -363,7 +363,7 @@ Page({
   },
 
   goHiking() {
-    wx.showToast({ title: '爬山功能开发中', icon: 'none' })
+    wx.navigateTo({ url: '/pages/hiking/list/list' })
   },
 
   onHide() {

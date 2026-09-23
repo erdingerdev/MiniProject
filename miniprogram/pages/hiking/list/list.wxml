@@ -1,0 +1,26 @@
+<view class="container theme-{{theme}}">
+  <!-- 背景光球 -->
+  <view class="bg-layer">
+    <view class="orb orb-cyan"></view>
+    <view class="orb orb-purple"></view>
+  </view>
+
+  <!-- 导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+    <text class="nav-title">厦门爬山库</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <view style="height: {{navBarTotalHeight}}px;"></view>
+
+  <!-- 空状态 -->
+  <view class="empty">
+    <text class="empty-text">还没有路线，来分享第一条吧</text>
+  </view>
+
+  <!-- 发布悬浮按钮 -->
+  <view class="fab" bindtap="goPublish">
+    <text class="fab-icon">+</text>
+  </view>
+</view>
