@@ -127,6 +127,10 @@ Page({
       wx.showToast({ title: '请点击昵称输入框获取微信昵称', icon: 'none' })
       return
     }
+    if (nickname.startsWith('wxid_')) {
+      wx.showToast({ title: '请填写真实昵称（勿填微信号）', icon: 'none' })
+      return
+    }
 
     // 确认资料后才真正登录
     if (!app.globalData.openid) {

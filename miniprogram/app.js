@@ -94,7 +94,8 @@ App({
     // 2. 本地缓存有效，直接恢复
     const stored = wx.getStorageSync('userInfo')
     if (stored && stored.nickname && stored.avatar &&
-        !stored.avatar.startsWith('wxfile://') && !stored.avatar.startsWith('http://tmp/')) {
+        !stored.avatar.startsWith('wxfile://') && !stored.avatar.startsWith('http://tmp/') &&
+        !stored.nickname.startsWith('wxid_')) {
       this.globalData.nickname = stored.nickname
       this.globalData.avatar = stored.avatar
       return true
@@ -103,7 +104,8 @@ App({
     try {
       const user = await api.getUserProfileCB(this.globalData.openid)
       if (user && user.nickname && user.avatar &&
-          !user.avatar.startsWith('wxfile://') && !user.avatar.startsWith('http://tmp/')) {
+          !user.avatar.startsWith('wxfile://') && !user.avatar.startsWith('http://tmp/') &&
+          !user.nickname.startsWith('wxid_')) {
         this.globalData.nickname = user.nickname
         this.globalData.avatar = user.avatar
         wx.setStorageSync('userInfo', { nickname: user.nickname, avatar: user.avatar })

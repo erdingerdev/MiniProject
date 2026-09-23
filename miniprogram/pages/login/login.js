@@ -65,6 +65,10 @@ Page({
       wx.showToast({ title: '请点击昵称输入框获取微信昵称', icon: 'none' })
       return
     }
+    if (nickname.startsWith('wxid_')) {
+      wx.showToast({ title: '请填写真实昵称（勿填微信号）', icon: 'none' })
+      return
+    }
 
     wx.showLoading({ title: '登录中...', mask: true })
 
