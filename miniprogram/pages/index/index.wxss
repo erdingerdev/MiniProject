@@ -859,7 +859,7 @@
 .card-title { font-size: 32rpx; font-weight: 600; color: var(--text); margin-bottom: 12rpx; position: relative; z-index: 1; text-shadow: 0 0 10rpx rgba(34,211,238,0.35); }
 .card-desc { font-size: 24rpx; color: var(--text-dim); position: relative; z-index: 1; }
 .card-badge { position: absolute; top: 12rpx; right: 12rpx; min-width: 36rpx; height: 36rpx; line-height: 36rpx; text-align: center; font-size: 20rpx; font-weight: 700; color: #fff; background: #ef4444; border-radius: 18rpx; padding: 0 8rpx; z-index: 2; }
-.promo-corner { position: absolute; top: 0; left: 80rpx; height: 104rpx; line-height: 81rpx; text-align: center; font-size: 36rpx; font-weight: 700; color: #fff; background: linear-gradient(135deg, #fb923c, #f97316); padding: 0 24rpx 0 20rpx; z-index: 2; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%); }
+.promo-corner { position: absolute; top: 0; left: 40rpx; height: 104rpx; line-height: 81rpx; text-align: center; font-size: 36rpx; font-weight: 700; color: #fff; background: linear-gradient(135deg, #fb923c, #f97316); padding: 0 24rpx 0 20rpx; z-index: 2; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%); }
 .card-clock {
   position: absolute;
   top: -48rpx; left: -32rpx; right: -32rpx; bottom: -48rpx;
