@@ -362,6 +362,10 @@ Page({
     wx.navigateTo({ url: '/pages/mine/mine' })
   },
 
+  goHiking() {
+    wx.showToast({ title: '爬山功能开发中', icon: 'none' })
+  },
+
   onHide() {
     if (this._clockTimer) { clearInterval(this._clockTimer); this._clockTimer = null }
   },

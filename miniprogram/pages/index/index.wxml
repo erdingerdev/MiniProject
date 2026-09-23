@@ -61,11 +61,18 @@
 
   <!-- 入口宫格 -->
   <view class="grid">
-    <view class="card swim-card" style="animation-delay: 0.1s" bindtap="goSwim">
-      <view class="promo-corner" wx:if="{{promoActive}}">惠</view>
-      <view class="card-icon">🏊</view>
-      <text class="card-title">获取游泳票</text>
-      <text class="card-desc">通行码验证 · 获取入场凭证</text>
+    <view class="card-row" style="animation-delay: 0.1s">
+      <view class="card card-half swim-card" bindtap="goSwim">
+        <view class="promo-corner" wx:if="{{promoActive}}">惠</view>
+        <view class="card-icon">🏊</view>
+        <text class="card-title">获取游泳票</text>
+        <text class="card-desc">通行码验证 · 获取入场凭证</text>
+      </view>
+      <view class="card card-half" bindtap="goHiking">
+        <view class="card-icon">⛰️</view>
+        <text class="card-title">爬山</text>
+        <text class="card-desc">路线攻略 · 找搭子</text>
+      </view>
     </view>
     <view class="card-row" style="animation-delay: 0.3s">
       <view class="card card-half" bindtap="goHub">
