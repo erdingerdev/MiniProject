@@ -1,5 +1,4 @@
 const api = require('./utils/api')
-const APP_VERSION = '2.2.1'
 
 App({
   globalData: {
@@ -17,14 +16,6 @@ App({
         traceUser: true
       })
       console.log('CloudBase 初始化成功')
-    }
-
-    // 版本升级时清除旧资料，强制重新设置
-    const storedVersion = wx.getStorageSync('app_version')
-    if (storedVersion !== APP_VERSION) {
-      wx.removeStorageSync('userInfo')
-      wx.removeStorageSync('popup_date')
-      wx.setStorageSync('app_version', APP_VERSION)
     }
 
     // 仅恢复头像昵称用于展示，不恢复 openid（openid 必须通过 wx.login 重新获取）
