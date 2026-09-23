@@ -62,29 +62,9 @@ Page({
   },
 
   async initFlow() {
-    if (!app.globalData.openid) {
-      const stored = wx.getStorageSync('userInfo')
-      if (stored && stored.nickname) {
-        try {
-          await app.doLogin()
-          app.globalData.nickname = stored.nickname
-          app.globalData.avatar = stored.avatar || ''
-          if (!app.globalData.avatar || app.globalData.avatar.startsWith('wxfile://') || app.globalData.avatar.startsWith('http://tmp/')) {
-            this.setData({
-              tempAvatar: '',
-              tempNickname: stored.nickname,
-              status: 'needProfile'
-            })
-            return
-          }
-        } catch {
-          this.setData({ status: 'needLogin' })
-          return
-        }
-      } else {
-        this.setData({ status: 'needLogin' })
-        return
-      }
+    if (!(await app.ensureProfile())) {
+      this.setData({ status: 'needLogin' })
+      return
     }
     try {
       const st = await api.getBindStatusCB(app.globalData.openid)
@@ -180,7 +160,7 @@ Page({
     wx.setStorageSync('userInfo', { nickname, avatar: avatarUrl })
 
     if (avatarUrl && !avatarUrl.startsWith('wxfile://') && !avatarUrl.startsWith('http://tmp/')) {
-      api.updateProfile(app.globalData.openid, nickname, avatarUrl).catch(() => {})
+      api.updateProfileCB(app.globalData.openid, nickname, avatarUrl).catch(() => {})
     }
 
     if (this._from === 'mine') {

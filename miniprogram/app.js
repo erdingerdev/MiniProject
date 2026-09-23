@@ -1,5 +1,5 @@
 const api = require('./utils/api')
-const APP_VERSION = '2.1.0'
+const APP_VERSION = '2.2.1'
 
 App({
   globalData: {
@@ -19,7 +19,6 @@ App({
       console.log('CloudBase 初始化成功')
     }
 
-    // 版本升级时清除旧资料，强制重新设置
     // 版本升级时清除旧资料，强制重新设置
     const storedVersion = wx.getStorageSync('app_version')
     if (storedVersion !== APP_VERSION) {
@@ -87,6 +86,41 @@ App({
       wx.setStorageSync('mock_openid', id)
     }
     return id
+  },
+
+  // 是否已具备完整资料（openid + 昵称 + 头像）
+  hasProfile() {
+    return !!(this.globalData.openid && this.globalData.nickname && this.globalData.avatar)
+  },
+
+  // 确保有完整资料：已有直接返回，否则本地恢复 → 服务端兜底
+  async ensureProfile() {
+    if (this.hasProfile()) return true
+    // 1. 先确保 openid（登录）
+    if (!this.globalData.openid) {
+      try { await this.doLogin() } catch { return false }
+    }
+    // 2. 本地缓存有效，直接恢复
+    const stored = wx.getStorageSync('userInfo')
+    if (stored && stored.nickname && stored.avatar &&
+        !stored.avatar.startsWith('wxfile://') && !stored.avatar.startsWith('http://tmp/')) {
+      this.globalData.nickname = stored.nickname
+      this.globalData.avatar = stored.avatar
+      return true
+    }
+    // 3. 服务端兜底
+    try {
+      const user = await api.getUserProfileCB(this.globalData.openid)
+      if (user && user.nickname && user.avatar &&
+          !user.avatar.startsWith('wxfile://') && !user.avatar.startsWith('http://tmp/')) {
+        this.globalData.nickname = user.nickname
+        this.globalData.avatar = user.avatar
+        wx.setStorageSync('userInfo', { nickname: user.nickname, avatar: user.avatar })
+        return true
+      }
+    } catch {}
+    // 4. 都没有
+    return false
   },
 
   // 获取用户头像昵称

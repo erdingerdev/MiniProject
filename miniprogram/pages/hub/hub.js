@@ -40,16 +40,16 @@ Page({
     wx.navigateBack()
   },
 
-  goCarpool() {
-    if (!app.globalData.openid) {
+  async goCarpool() {
+    if (!(await app.ensureProfile())) {
       wx.navigateTo({ url: '/pages/login/login?from=carpool' })
       return
     }
     wx.navigateTo({ url: '/pages/carpool/list/list' })
   },
 
-  goFeedback() {
-    if (!app.globalData.openid) {
+  async goFeedback() {
+    if (!(await app.ensureProfile())) {
       wx.navigateTo({ url: '/pages/login/login?from=feedback' })
       return
     }

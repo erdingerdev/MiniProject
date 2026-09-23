@@ -133,25 +133,12 @@ Page({
     })
     this.genDots()
 
-    // 确保已登录再检查通行码状态
-    if (!app.globalData.openid) {
-      const stored = wx.getStorageSync('userInfo')
-      if (stored && stored.nickname) {
-        try {
-          await app.doLogin()
-          app.globalData.nickname = stored.nickname
-          app.globalData.avatar = stored.avatar || ''
-          this.setData({
-            avatar: u.avatar || '',
-            nickname: u.nickname || ''
-          })
-        } catch {
-          return
-        }
-      } else {
-        return
-      }
-    }
+    // 确保有完整资料（本地优先，服务端兜底）
+    await app.ensureProfile()
+    this.setData({
+      avatar: app.globalData.avatar || '',
+      nickname: app.globalData.nickname || ''
+    })
     // 先加载数据，再处理出票动画
     this.loadPasscodeStatus()
     this.loadInactiveStatus()
@@ -254,12 +241,12 @@ Page({
     this.setData({ clockTime: h + ':' + m })
   },
 
-  goSwim() {
+  async goSwim() {
     if (!this.data.swimEnabled) {
       wx.showToast({ title: '系统维护中，请直接联系国哥', icon: 'none', duration: 2500 })
       return
     }
-    if (!app.globalData.openid) {
+    if (!(await app.ensureProfile())) {
       wx.navigateTo({ url: '/pages/login/login?from=swim' })
       return
     }
@@ -372,10 +359,6 @@ Page({
   },
 
   goMine() {
-    if (!app.globalData.openid || !app.globalData.nickname || !app.globalData.avatar) {
-      wx.navigateTo({ url: '/pages/swim/swim?from=mine' })
-      return
-    }
     wx.navigateTo({ url: '/pages/mine/mine' })
   },
 
@@ -520,8 +503,7 @@ Page({
   async loadInactiveStatus() {
     if (!app.globalData.openid) return
     try {
-      const stats = await api.getUserStats(app.globalData.openid)
-      const lastDate = stats.lastCheckinDate
+      const lastDate = await api.getLastCheckinCB(app.globalData.openid)
       if (lastDate) {
         const last = new Date(lastDate)
         const today = new Date()

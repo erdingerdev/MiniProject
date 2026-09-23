@@ -104,7 +104,7 @@ Page({
     // 更新服务端资料
     if (avatarUrl && !avatarUrl.startsWith('wxfile://') && !avatarUrl.startsWith('http://tmp/')) {
       const api = require('../../utils/api')
-      api.updateProfile(app.globalData.openid, nickname, avatarUrl).catch(() => {})
+      api.updateProfileCB(app.globalData.openid, nickname, avatarUrl).catch(() => {})
     }
 
     // 根据来源跳转

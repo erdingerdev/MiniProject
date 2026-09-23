@@ -74,10 +74,10 @@
         <text class="card-desc">结伴通勤 · 更多功能</text>
         <view class="card-badge" wx:if="{{carpoolUnread}}">{{carpoolUnread > 99 ? '99+' : carpoolUnread}}</view>
       </view>
-      <view class="card card-half" style="animation-delay: 0.4s" bindtap="showContactQR">
-        <view class="card-icon">🔳</view>
-        <text class="card-title">联系国哥</text>
-        <text class="card-desc">有问题 · 找国哥</text>
+      <view class="card card-half" style="animation-delay: 0.4s" bindtap="goMine">
+        <view class="card-icon">📅</view>
+        <text class="card-title">我的</text>
+        <text class="card-desc">打卡记录 · 连续天数</text>
       </view>
     </view>
   </view>

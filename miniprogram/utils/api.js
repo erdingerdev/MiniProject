@@ -355,6 +355,38 @@ const getTotalCheckinCount = async (openid) => {
   return res.total
 }
 
+// 最近一次打卡时间（轻量，只查最新 1 条）
+const getLastCheckinCB = async (openid) => {
+  const res = await getDb().collection('checkins')
+    .where({ openid })
+    .orderBy('timestamp', 'desc')
+    .limit(1).get()
+  return res.data[0] ? res.data[0].timestamp : null
+}
+
+// 根据 openid 查询用户头像昵称（本地缓存丢失时的服务端兜底）
+const getUserProfileCB = async (openid) => {
+  const res = await getDb().collection('app_users').where({ _openid: openid }).get()
+  if (res.data.length === 0) return null
+  const u = res.data[0]
+  return { nickname: u.nickname || '', avatar: u.avatar || '' }
+}
+
+// 更新用户头像昵称到服务端（设置资料时调用）
+const updateProfileCB = async (openid, nickname, avatar) => {
+  if (!getDb()) throw new Error('CloudBase 未初始化')
+  const res = await getDb().collection('app_users').where({ _openid: openid }).get()
+  if (res.data.length > 0) {
+    await getDb().collection('app_users').where({ _openid: openid }).update({
+      data: { nickname, avatar }
+    })
+  } else {
+    await getDb().collection('app_users').add({
+      data: { _openid: openid, openid, nickname, avatar, boundPasscodeIds: [] }
+    })
+  }
+}
+
 // 按月获取打卡记录，每页 20 条循环取全
 const getCheckinsByMonth = async (openid, year, month) => {
   const start = `${year}-${String(month).padStart(2, '0')}-01`
@@ -610,6 +642,9 @@ module.exports = {
   getLeaderboardCB,
   getUserStatsCB,
   getTotalCheckinCount,
+  getLastCheckinCB,
+  getUserProfileCB,
+  updateProfileCB,
   getCheckinsByMonth,
   getUserCheckinsCB,
   manualCheckinCB,
