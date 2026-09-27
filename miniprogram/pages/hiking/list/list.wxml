@@ -6,7 +6,7 @@
   </view>
 
   <!-- 导航栏 -->
-  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-bar {{scrolled ? 'scrolled' : ''}}" style="padding-top: {{statusBarHeight}}px;">
     <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
     <text class="nav-title">厦门爬山库</text>
     <view class="nav-placeholder"></view>

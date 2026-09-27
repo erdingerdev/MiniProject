@@ -2,7 +2,8 @@ Page({
   data: {
     theme: 'dark',
     statusBarHeight: 0,
-    navBarTotalHeight: 0
+    navBarTotalHeight: 0,
+    scrolled: false
   },
 
   onLoad() {
@@ -21,11 +22,16 @@ Page({
     if (this.data.theme !== theme) this.setData({ theme })
   },
 
+  onPageScroll(e) {
+    const scrolled = e.scrollTop > 20
+    if (scrolled !== this.data.scrolled) this.setData({ scrolled })
+  },
+
   goBack() {
     wx.navigateBack()
   },
 
   goPublish() {
-    wx.showToast({ title: '发布功能开发中', icon: 'none' })
+    wx.navigateTo({ url: '/pages/hiking/publish/publish' })
   }
 })

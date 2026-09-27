@@ -12,7 +12,8 @@
     "pages/login/login",
     "pages/carpool/list/list",
     "pages/carpool/publish/publish",
-    "pages/hiking/list/list"
+    "pages/hiking/list/list",
+    "pages/hiking/publish/publish"
   ],
   "lazyCodeLoading": "requiredComponents",
   "window": {

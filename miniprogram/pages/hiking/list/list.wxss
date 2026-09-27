@@ -8,8 +8,9 @@
 .orb-purple { width: 300rpx; height: 300rpx; background: #8b5cf6; bottom: -80rpx; left: -80rpx; }
 
 /* 导航栏 - 固定 */
-.nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding-left: 40rpx; padding-right: 40rpx; padding-bottom: 16rpx; box-sizing: border-box; background: rgba(0,0,0,0.3); backdrop-filter: blur(10rpx); }
-.theme-light .nav-bar { background: rgba(1,107,97,0.5); backdrop-filter: blur(10rpx); }
+.nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding-left: 40rpx; padding-right: 40rpx; padding-bottom: 16rpx; box-sizing: border-box; background: transparent; transition: background 0.2s ease; }
+.nav-bar.scrolled { background: #080b11; }
+.theme-light .nav-bar.scrolled { background: #016B61; }
 .nav-back { width: 64rpx; height: 88rpx; display: flex; align-items: center; justify-content: center; }
 .nav-back-icon { font-size: 52rpx; color: #e0e0e0; }
 .nav-title { font-size: 32rpx; font-weight: 600; color: #e0e0e0; }

@@ -1,0 +1,42 @@
+<view class="container theme-{{theme}}">
+  <!-- 背景光球 -->
+  <view class="bg-layer">
+    <view class="orb orb-cyan"></view>
+    <view class="orb orb-purple"></view>
+  </view>
+
+  <!-- 导航栏 -->
+  <view class="nav-bar {{scrolled ? 'scrolled' : ''}}" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack"><text class="nav-back-icon">‹</text></view>
+    <text class="nav-title">分享路线</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <view style="height: {{navBarTotalHeight}}px;"></view>
+
+  <view class="editor">
+    <!-- 图片横向列表 -->
+    <scroll-view class="img-scroll" scroll-x>
+      <view class="img-row">
+        <view class="img-item" wx:for="{{images}}" wx:key="*this">
+          <image class="img-thumb" src="{{item}}" mode="aspectFill"/>
+          <view class="img-remove" catchtap="removeImage" data-index="{{index}}">✕</view>
+        </view>
+        <view class="img-add" wx:if="{{images.length < 18}}" bindtap="addImages">
+          <text class="img-add-plus">＋</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 标题 -->
+    <input class="title-input" placeholder="给这条路线起个名字" placeholder-class="ph"
+      value="{{title}}" bindinput="onTitleInput" maxlength="30"/>
+
+    <!-- 正文 -->
+    <textarea class="content-input" placeholder="写写路线怎么走、有什么看点、补给点…" placeholder-class="ph"
+      value="{{content}}" bindinput="onContentInput" maxlength="2000" auto-height cursor-spacing="24"/>
+  </view>
+
+  <!-- 发布按钮 -->
+  <button class="publish-btn" bindtap="save">发布</button>
+</view>
